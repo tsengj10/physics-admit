@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions Database - Consent and Agreement
+{% endblock %}
+{% block content %}
+<h1>Data Protection and Statement on the Use of Cookies.</h1>
+<p>By clicking on <b>I Agree</b> below you confirm that have read and agree to be bound by the <a href="https://www.it.ox.ac.uk/policies-and-guidelines/information-security-policy">University Information Security Policy</a>, in particular in regard to data protection. I agree that I will access and view data only for which I have been authorised and will not share any data without appropriate authority. I am aware that failure to comply with the provisions of the Data Protection Act may render the University, or in certain circumstances myself, liable to prosecution as well as giving rise to civil liabilities.</p>
+<p>By clicking on <b>I Agree</b> below you also confirm that you have read and agree to be bound by the <a href="https://www.it.ox.ac.uk/rules">University IT Rules</a>.</p>
+<p>Finally, this website necessarily uses cookies to function (<i>strictly necessary cookies</i>). By clicking on <b>I Agree</b> below you consent to those cookies being created, used and stored. For more information on cookies see the <a href="https://www.ox.ac.uk/content/cookie-statement">University statement on cookies</a>.</p>
+
+
+<p>If you do not agree to or do not consent to all of the above then click on the <b>Log out</b> link at the bottom of this page, follow the instructions given on that page and then close your browser window.</p>
+
+<div style="width:200px;margin:auto;">
+  <p><a href="{% url 'admissions:colleges' %}"><font size="+3">I Agree</font></a></p>
+</div>
+
+{% endblock %}

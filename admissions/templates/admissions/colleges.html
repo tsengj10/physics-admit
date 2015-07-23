@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% load staticfiles %}
+{% block title %}
+Admissions database - college list{% if year %} for {{ year }}{% endif %}
+{% endblock %}
+{% block head %}
+<script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
+<style>
+table { font-size: 13px;
+}
+th {
+  font-weight: bold;
+  padding-left: 3em;
+  padding-right: 3em;
+}
+.notice { font-weight: bold; color: red }
+</style>
+{% endblock %}
+{% block content %}
+<h2>Colleges {% if year %}(historical data for {{ year }} interview cycle){% else %}- present interview cycle{% endif %}</h2>
+
+<!--
+<p class="notice">
+Please complete rescuing/ring-fencing (&quot;saving&quot) by 8pm on Saturday 22 November 2014.
+</p>
+-->
+
+{% if year %}
+<p><a href="{% url 'admissions:all_applicants_js'|lower year=year %}">Active applicant list for all colleges</a></p>
+<p><a href="{% url 'admissions:every_applicants_js'|lower year=year %}">Complete applicant list for all colleges</a></p>
+{% else %}
+<p><a href="{% url 'admissions:all_applicants_js'|lower %}">Active applicant list for all colleges</a></p>
+<p><a href="{% url 'admissions:every_applicants_js'|lower %}">Complete applicant list for all colleges</a></p>
+{% endif %}
+
+<p>
+The above data files contain roughly 4MB of data.
+The following smaller applicant lists are provided for those with lower
+bandwidth connections or old browsers, such as IE9.
+</p>
+
+<table id="clist">
+<tr><th>Applicants</th>
+<!--<th>Interview</th><th>Schedule</th>-->
+<th>Places</th>
+<th>Offers made</th>
+<th>Flags</th>
+</tr>
+<tr><th></th>
+<!--<th>teams</th><th>(do not use yet)</th>-->
+<th>(incl PhysPhil)</th>
+<th>(incl PhysPhil)</th>
+<th>(incl PhysPhil)</th>
+</tr>
+{% for college in colleges %}
+<tr>
+{% if year %}
+  <td><a href="{% url 'admissions:college_applicants_js' college_code=college.adss_code|lower year=year %}">{{ college.name }}</a></td>
+{% else %}
+  <td><a href="{% url 'admissions:college_applicants_js' college_code=college.adss_code|lower %}">{{ college.name }}</a></td>
+{% endif %}
+  <!--<td><a href="{% url 'admissions:edit_teams' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>-->
+  <!--<td><a href="{% url 'admissions:edit_schedule' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>-->
+  <td class='cplaces'><a href="{% url 'admissions:edit_college' college_code=college.adss_code|lower %}">{{ college.total_places }}({{ college.physphil_places }})</a></td>
+  <td id='offers-{{ college.adss_code }}'></td>
+  <td id='flags-{{ college.adss_code }}'></td>
+</tr>
+{% endfor %}
+</table>
+
+<p><b>Places:</b>
+<table id="places">
+<tr><th></th><th>Projected</th><th>Offers made</th><th>Flags</th></tr>
+<tr><th></th><th></th><th>(not unique)</th><th>(not unique)</th></tr>
+<tr><th align='right'>Physics:</th>
+    <td align='center' id="physplaces"></td>
+    <td align='center' id="physoffers"></td>
+    <td align='center' id="physflags"></td></tr>
+<tr><th align='right'>PhysPhil:</th>
+    <td align='center' id="physphilplaces"></td>
+    <td align='center' id="physphiloffers"></td>
+    <td align='center' id="physphilflags"></td></tr>
+<tr><th align='right'>Total:</th>
+    <td align='center' id="totalplaces"></td>
+    <td align='center' id="totaloffers"></td>
+    <td align='center' id="totalflags"></td>
+</table>
+</p>
+
+{% if year %}<p><a href="{% url 'admissions:colleges' %}">Back to viewing present data</a></p>{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+var data_string = "{{ data }}";
+var data_cleaned = data_string.replace(/&quot;/g,'"');
+var data = JSON.parse(data_cleaned);
+
+$(document).ready(function() {
+  var ot = 0;
+  var opp = 0;
+  var ft = 0;
+  var fpp = 0;
+  $.each(data, function(k,v) {
+    var ccode = k;
+    var total = v.op + v.opp;
+    var pp = v.opp;
+    var s = "" + total.toString() + "(" + pp.toString() + ")";
+    ot += total;
+    opp += pp;
+    $('#offers-'+ccode).html(s);
+    console.log('offers-' + ccode + ':  ' + s);
+    total = v.fp + v.fpp;
+    pp = v.fpp;
+    ft += total;
+    fpp += pp;
+    s = "" + total.toString() + "(" + pp.toString() + ")";
+    $('#flags-'+ccode).html(s);
+  });
+
+  var nt = 0;
+  var npp = 0;
+  $('.cplaces').each(function(i,e) {
+    var s = $(this).text();
+    //console.log('i = ' + i + ' s = ' + s);
+    var n = s.match(/[0-9]+/g);
+    nt += parseInt(n[0]);
+    npp += parseInt(n[1]);
+  });
+  var np = nt - npp;
+  var op = ot - opp;
+  var fp = ft - fpp;
+  $('#physplaces').html(np.toString());
+  $('#physphilplaces').html(npp.toString());
+  $('#totalplaces').html(nt.toString());
+  $('#physoffers').html(op.toString());
+  $('#physphiloffers').html(opp.toString());
+  $('#totaloffers').html(ot.toString());
+  $('#physflags').html(fp.toString());
+  $('#physphilflags').html(fpp.toString());
+  $('#totalflags').html(ft.toString());
+});
+</script>
+{% endblock %}

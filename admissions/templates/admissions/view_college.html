@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions database - view college {{ college.name }} ({{ college.adss_code }})
+{% endblock %}
+{% block head %}
+<style>
+table { font-size: 16px; }
+</style>
+{% endblock %}
+{% block content %}
+<h2>College: {{ college.name }} ({{ college.adss_code }})</h2>
+    <table border="0">
+    <tr><td align="right">Total places:</td><td>{{ college.total_places }}</td></tr>
+    <tr><td align="right">PhysPhil places:</td><td>{{ college.physphil_places }}</td></tr>
+    </table>
+<p>Note that the total includes the PhysPhil places.</p>
+<!--<p><a href="{{ return_to }}">Go back</a></p>-->
+{% endblock %}

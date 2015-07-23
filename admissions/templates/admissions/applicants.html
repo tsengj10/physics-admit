@@ -1,0 +1,1032 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% load staticfiles %}
+{% block title %}
+Admissions database - {{ college.name }} applicants (interviews in {{ interview_year }})
+{% endblock %}
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/media/css/jquery.dataTables.min.css" %}'>
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColVis/css/dataTables.colVis.min.css" %}'>
+<!--link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColReorder/css/dataTables.colReorder.min.css" %}'-->
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/TableTools/css/dataTables.tableTools.min.css" %}'>
+<script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/media/js/jquery.dataTables.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
+<!--script src='{% static "js/DataTables-1.10.2/extensions/ColReorder/js/dataTables.colReorder.min.js" %}'></script-->
+<script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
+<script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
+<script src='{% static "js/cryptojs-3.1.2/rollups/aes.js" %}'></script>
+<script src='{% static "js/cryptojs-3.1.2/components/core.js" %}'></script>
+<script src='{% static "js/cryptojs-3.1.2/components/enc-base64.js" %}'></script>
+<style>
+td.details-control {
+    background: url('{% static "js/details_open.png" %}') no-repeat center center;
+    cursor: pointer;
+}
+tr.shown td.details-control {
+    background: url('{% static "js/details_close.png" %}') no-repeat center center;
+}
+tr.shown-school td.details-control {
+    background: url('{% static "js/details_close.png" %}') no-repeat center center;
+}
+tr.shown-predicted td.details-control {
+    background: url('{% static "js/details_close.png" %}') no-repeat center center;
+}
+tr.shown-obtained td.details-control {
+    background: url('{% static "js/details_close.png" %}') no-repeat center center;
+}
+tr.shown-comments td.details-control {
+    background: url('{% static "js/details_close.png" %}') no-repeat center center;
+}
+th {
+    text-align: left;
+}
+td {
+  text-align: left;
+  vertical-align: text-top;
+}
+td.school-detail {
+  color: blue;
+  cursor: pointer;
+}
+td.predicted-detail {
+  color: blue;
+  cursor: pointer;
+}
+td.obtained-detail {
+  color: blue;
+  cursor: pointer;
+}
+td.comments-detail {
+  color: blue;
+  cursor: pointer;
+}
+
+input.inblanks {
+  width: 3em;
+}
+
+p#messages {
+  color: red;
+}
+
+</style>
+{% endblock %}
+{% block content %}
+<h2>College: {{ college.name }} ({% if interview_year != present_interview_year %}Historical data for {% endif %}{{ interview_year }} interviews)</h2>
+
+<table cellspacing="0" cellpadding="3" border="0">
+<tr>
+  <td>College choices:</td>
+  <td><select id="scol" class="csel"><option value=""></option></select></td>
+  <td>1<input type="checkbox" id="scol1" class="csel"></td>
+  <td>2<input type="checkbox" id="scol2" class="csel"></td>
+  <td>3<input type="checkbox" id="scol3" class="csel"></td>
+  <td>4<input type="checkbox" id="scol4" class="csel"></td>
+  <td>5<input type="checkbox" id="scol5" class="csel"></td>
+  <td>6<input type="checkbox" id="scol6" class="csel"></td>
+  <td>Flags<input type="checkbox" id="scolf" class="csel"></td>
+  <td>Offers<input type="checkbox" id="scol0" class="csel"></td>
+  <td>Exclude offers<input type="checkbox" id="scolx" class="csel"></td>
+</tr>
+</table>
+
+<table id="candidates" class="display compact" cellspacing="0" cellpadding="0" width="100%">
+<thead>
+  <tr>
+    <th></th>
+    <th colspan="8" valign="top">Edit (be sure to click &quot;Save&quot; below)</th>
+    <th></th>
+    <th></th>
+    <th colspan="3" valign="top">PAT</th>
+    <th colspan="5" valign="top">Interviews</th>
+    <th></th>
+    <th></th>
+    <th></th>
+    <th></th>
+    <th colspan="6" valign="top">Colleges</th>
+    <th colspan="6"></th>
+    <th colspan="2" valign="top">Qualifications</th>
+    <th colspan="8" valign="top">Contextual</th>
+    <th></th>
+  </tr>
+  <tr>
+    <th></th>
+    <!-- Input -->
+    <th title="State">State</th>
+    <th title="First college interview 1">i1</th>
+    <th title="First college interview 2">i2</th>
+    <th title="Second college interview">i3</th>
+    <th title="First college philosophy interview">i4</th>
+    <th title="Second college philosophy interview">i5</th>
+    <th title="College rank">ColRank</th> <!-- left spare -->
+    <th title="Course offer">Offer</th>
+    <!-- Oxford marks -->
+    <th title="Status">Status</th>
+    <th title="Offer">Offer</th> <!-- left spare -->
+    <th title="PAT Math">M</th>
+    <th title="PAT Physics">Ph</th>
+    <th title="PAT Sum">+</th>
+    <th title="First college interview 1">i1</th>
+    <th title="First college interview 2">i2</th>
+    <th title="Second college interview">i3</th>
+    <th title="First college philosophy interview">i4</th>
+    <th title="Second college philosophy interview">i5</th>
+    <th title="Number of comments (click to view/add)">&amp;</th>
+    <th title="Jelley score">Jel</th>
+    <th title="Rank">#</th> <!-- left spare -->
+    <!-- Candidate information -->
+    <th>Name</th>
+    <th>Col1</th>
+    <th>Col2</th>
+    <th>Col3</th>
+    <th>Col4</th>
+    <th>Col5</th>
+    <th>Col6</th>
+    <th title="Prospective entrance year">Year</th>
+    <th title="Course">C</th>
+    <th title="Gender">G</th>
+    <th title="School type">Sch</th>
+    <th title="Single/Double Maths">SD</th>
+    <th>A*</th>
+    <th>Predicted</th>
+    <th>Obtained</th>
+    <th title="Care">C</th>
+    <!--th>sutton</th-->
+    <th title="GCSE">G</th>
+    <th title="ALev">Al</th>
+    <th title="OFFA">Of</th>
+    <th title="ACORN">Ac</th>
+    <th title="POLAR2">P</th>
+    <th title="Access">Acc</th>
+    <th title="Overall">Ov</th>
+    <th title="UCAS id">UCAS id</th>
+  </tr>
+</thead>
+<tfoot>
+  <tr>
+    <th></th>
+    <!-- Input -->
+    <th title="State">State</th>
+    <th title="First college interview 1">i1</th>
+    <th title="First college interview 2">i2</th>
+    <th title="Second college interview">i3</th>
+    <th title="First college philosophy interview">i4</th>
+    <th title="Second college philosophy interview">i5</th>
+    <th title="College rank">ColRank</th>
+    <th title="Course offer">Offer</th>
+    <!-- Oxford marks -->
+    <th title="Status">Status</th>
+    <th title="Offer">Offer</th>
+    <th title="PAT Math">M</th>
+    <th title="PAT Physics">Ph</th>
+    <th title="PAT Sum">+</th>
+    <th title="First college interview 1">i1</th>
+    <th title="First college interview 2">i2</th>
+    <th title="Second college interview">i3</th>
+    <th title="First college philosophy interview">i4</th>
+    <th title="Second college philosophy interview">i5</th>
+    <th title="Number of comments (click to view/add)">&amp;</th>
+    <th title="Jelley score">Jel</th>
+    <th title="Rank">#</th>
+    <!-- Candidate information -->
+    <th>Name</th>
+    <th>Col1</th>
+    <th>Col2</th>
+    <th>Col3</th>
+    <th>Col4</th>
+    <th>Col5</th>
+    <th>Col6</th>
+    <th>Year</th>
+    <th title="Course">C</th>
+    <th title="Gender">G</th>
+    <th title="School type">Sch</th>
+    <th title="Single/Double Maths">SD</th>
+    <th>A*</th>
+    <th>Predicted</th>
+    <th>Obtained</th>
+    <th title="Care">C</th>
+    <!--th>sutton</th-->
+    <th title="GCSE">G</th>
+    <th title="ALev">Al</th>
+    <th title="OFFA">Of</th>
+    <th title="ACORN">Ac</th>
+    <th title="POLAR2">P</th>
+    <th title="Access">Acc</th>
+    <th title="Overall">Ov</th>
+    <th title="UCAS id">UCAS id</th>
+  </tr>
+</tfoot>
+</table>
+
+<p>
+<button type='button' id='savebutton' class='statebutton' disabled=true>Save state</button>
+<button type='button' id='reloadbutton' class='reloadbutton'>Reload state</button>
+<button type='button' id='resetbutton' class='resetbutton'>Reset blanks</button>
+</p>
+
+<p id="messages">
+</p>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+//
+// server-side computations
+//
+var globalstate = "{{ state }}";
+var ranking_phase = "{{ ranking_phase }}";
+var user_college_list = "{{ user_colleges }}";
+var user_college_list_r = user_college_list.replace(/&quot;/g,'"');
+var user_colleges = JSON.parse(user_college_list_r);
+var use_all_colleges = (user_colleges[0] == "ALL");
+var college_list_code = "{{ college.adss_code }}";
+
+function offerable(rank) {
+  if (ranking_phase == 1) {
+    return rank <= 100;
+  } else if (ranking_phase == 2) {
+    return rank <= 150;
+  } else if (ranking_phase == 3) {
+    return rank <= 150 || (rank >= 200 && rank <= 300);
+  } else if (ranking_phase >= 4) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+{% if college.adss_code == 'ALL' %}
+  {% url 'admissions:all_applicants_js' as the_url %}
+  {% url 'admissions:api_all_student_states' as states_url %}
+{% elif college.adss_code == 'APP' %}
+  {% url 'admissions:every_applicants_js' as the_url %}
+  {% url 'admissions:api_all_student_states' as states_url %}
+{% else %}
+  {% url 'admissions:college_applicants_js' college.adss_code|lower as the_url %}
+  {% url 'admissions:api_student_states' college_code=college.adss_code|lower as states_url %}
+{% endif %}
+
+var testtheurl = "{{ the_url }}";
+var teststatesurl = "{{ states_url }}";
+
+var collegekey = [];
+var keylist = "{{ college_key_list }}";
+if (keylist.length > 0) {
+  var keylist_r = keylist.replace(/&quot;/g,'"');
+  var keylist_j = JSON.parse(keylist_r);
+  keylist_j.forEach(function(d) {
+    collegekey[d.c] = d.k;
+    //console.log("Found key for " + d.c + ":  " + d.k);
+  });
+}
+
+//
+// Formatting function for row details
+//
+//function format ( d, f ) {
+//  return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">' +
+//         d[f] + '</table>';
+//}
+
+var detail_labels = [
+  { 'key': 'id', 'label': 'UCAS id' },
+  { 'key': 'email', 'label': 'E-mail' },
+  { 'key': 'tel', 'label': 'Telephone' },
+  { 'key': 'mob', 'label': 'Mobile' },
+  { 'key': 'bd', 'label': 'Birthdate' },
+  { 'key': 'ovs', 'label': 'Overseas' },
+  { 'key': 'spec', 'label': 'Special needs' },
+  { 'key': 'dcode', 'label': 'Disability code' },
+  { 'key': 'dis', 'label': 'Disability notes' }
+];
+
+function format_detail(d,pk) {
+  var s = [ '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">' ];
+  for (var i = 0; i < detail_labels.length; ++i) {
+    s.push('<tr><td><b>' + detail_labels[i].label +
+           '</b></td><td>' + d[detail_labels[i].key] +
+           '</td></tr>');
+  }
+  s.push('</table>');
+{% if can_edit %}
+  s.push('<p><a href="/admissions/applicants/' + pk + '/?next={{ the_url }}">Edit details</a></p>');
+  //s.push('<p><a href="/admissions/slotsbyc/' + pk + '">Edit interview slots</a></p>');
+{% endif %}
+  return s.join('');
+}
+
+function format_schools(d,pk) {
+  var s = [ '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">' ];
+  s.push('<tr><th><b>Start</b></th><th><b>End</b></th><th><b>UCAS Id</b></th><th><b>School</b></th><th><b>Pre-16 perf</b></th><th><b>Pre-16 gold</b></th><th><b>Post-16 perf</b></th></tr>');
+  for (var i = 0; i < d.length; ++i) {
+    s.push('<tr><td>' + d[i].b +
+           '</td><td>' + d[i].e +
+           '</td><td>' + d[i].id +
+           '</td><td>' + d[i].det +
+           '</td><td>' + (d[i].pre ? d[i].pre : '') +
+           '</td><td>' + (d[i].gold ? d[i].gold : '') +
+           '</td><td>' + (d[i].post ? d[i].post : '') +
+           '</td></tr>');
+  }
+  s.push('</table>');
+{% if can_edit %}
+  s.push('<p><a href="/admissions/schools/' + pk + '/?next={{ the_url }}">Edit education history</a></p>');
+{% endif %}
+  return s.join('');
+}
+
+function format_predicted_quals(d,pk) {
+  var s = [ '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">' ];
+  s.push('<tr><th><b>Date</b></th><th><b>Body</b></th><th><b>Type</b></th><th><b>Prediction</b></th><th><b>Qualification</b></th></tr>');
+  for (var i = 0; i < d.length; ++i) {
+    s.push('<tr><td>' + d[i].d +
+           '</td><td>' + d[i].b +
+           '</td><td>' + d[i].t +
+           '</td><td>' + d[i].g +
+           '</td><td><b>' + d[i].ti +
+           '</b>');
+    if (d[i].u.length > 0) s.push('<br>' + d[i].u.replace('&#10;','<br>'));
+    s.push('</td></tr>');
+  }
+  s.push('</table>');
+{% if can_edit %}
+  s.push('<p><a href="/admissions/quals/' + pk + '/?next={{ the_url }}">Edit qualifications</a></p>');
+{% endif %}
+  return s.join('');
+}
+
+function format_quals(d,pk) {
+  var s = [ '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">' ];
+  s.push('<tr><th><b>Date</b></th><th><b>Body</b></th><th><b>Type</b></th><th><b>Result</b></th><th><b>Qualification</b></th></tr>');
+  for (var i = 0; i < d.length; ++i) {
+    s.push('<tr><td>' + d[i].d +
+           '</td><td>' + d[i].b +
+           '</td><td>' + d[i].t +
+           '</td><td>' + d[i].r +
+           '</td><td><b>' + d[i].ti +
+           '</b>');
+    if (d[i].g.length > 0) s.push('<br>Grade: ' + d[i].g);
+    if (d[i].u.length > 0) s.push('<br>' + d[i].u.replace('&#10;','<br>'));
+    s.push('</td></tr>');
+  }
+  s.push('</table>');
+{% if can_edit %}
+  s.push('<p><a href="/admissions/quals/' + pk + '/?next={{ the_url }}">Edit qualifications</a></p>');
+{% endif %}
+  return s.join('');
+}
+
+function format_comments(d,jrow) {
+  var s = [];
+  if (d == undefined) {
+    s.push('<p>No comments.</p>');
+  } else if (d.length == 0) {
+    s.push('<p>No comments.</p>');
+  } else {
+    s.push('<p><ul>');
+    for (var i = 0; i < d.length; ++i) {
+      s.push('<li><b>' + d[i].who + ' (' + d[i].when + ')</b><br>' +
+             d[i].t.replace('&#10;','<br>').replace('\n','<br>').replace('\r',''));
+    }
+    s.push('</ul></p>');
+  }
+  //s.push('<p><a href="/admissions/comments/' + pk + '">Edit comments</a></p>');
+  s.push("<p><textarea name='comment-" + jrow +
+         "' rows='3' cols='50' onchange='enable_save()'></textarea></p>");
+  s.push("<p>Use &quot;Save&quot; button to save comment.  ");
+  s.push("(You may need to click outside the text box to enable saving.)</p>");
+  //console.log("format_comments:  row = " + jrow);
+  return s.join('');
+}
+
+function enable_save() {
+  $('.statebutton').removeAttr('disabled');
+}
+
+function disable_save() {
+  $('.statebutton').attr('disabled','disabled');
+}
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+var csrftoken = $.cookie('csrftoken');
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+//"csrfmiddlewaretoken" is a key in your posted data,for example,
+//when you need to ajax login,your posted data may like this:
+// {'username':'username','password':'password',
+//  'csrfmiddlewaretoken':'CSRF-TOKEN-V‌​ALUE'} – 
+
+function renderChangeState(data, type, row, meta) {
+  if (use_all_colleges || jQuery.inArray(row["c1"], user_colleges) >= 0) {
+    if (type === "display") {
+      var jr = meta.row;
+      var td = [];
+      td.push("<select class='inblanks' name='sel-" + jr + "' onchange='enable_save()'>");
+      td.push("<option value=''></option>");
+{% if state_longlist %}
+      td.push("<option value='r'>Rescue</option><option value='t'>Unrescue</option>");
+      td.push("<option value='s'>Save</option><option value='u'>Unsave</option>");
+{% endif %}
+      if (row["course"] == 'P') td.push("<option value='q'>P&rarr;Q</option>")
+      else if (row["course"] == 'Q') td.push("<option value='p'>Q&rarr;P</option>")
+      td.push("<option value='w'>Withdraw</option><option value='a'>Unwithdraw</option></select>")
+      return td.join('');
+    } else {
+      var v = $("select[name='sel-"+meta.row+"']").val();
+      return v == undefined ? "" : v;
+    }
+  }
+  //console.log("  unused row=" + meta.row + " pk=" + row["pk"] + " value=" + data);
+  //console.log("  typeof data = " + (typeof data));
+  //if (meta.row == 17) {
+  //  for (e in data) {
+      //console.log("    data[" + e + "] = " + data[e]);
+  //  }
+  //}
+  return data == undefined ? "" : data;
+}
+
+function renderChangeIntCol1(data, type, row, meta) {
+{% if state_enter_interview_marks %}
+  var iindex = meta.col - 1; // depends on column position in table
+  if (use_all_colleges || jQuery.inArray(row["c1"], user_colleges) >= 0) {
+    if (type === "display") {
+      if ((iindex < 4 || row["course"] == "P" || row["course"] == "Q") &&
+          row["status"].indexOf('[') == -1) {
+        return "<input type='number' class='inblanks' name='int-" + meta.row +
+               "-" + iindex +
+               "' onchange='enable_save()'>";
+      }
+    } else {
+      return $("input[name='int-"+meta.row+"-"+iindex+"']").val();
+    }
+  }
+{% endif %}
+  return data;
+}
+
+function renderChangeIntCol2(data, type, row, meta) {
+{% if state_enter_interview_marks %}
+  var iindex = meta.col - 1; // depends on column position in table
+  if (use_all_colleges || jQuery.inArray(row["c2"], user_colleges) >= 0) {
+    if (type === "display") {
+      if ((iindex < 4 || row["course"] == "P" || row["course"] == "Q") &&
+          row["status"].indexOf('[') == -1) {
+        return "<input type='number' class='inblanks' name='int-" + meta.row +
+               "-" + iindex +
+               "' onchange='enable_save()'>";
+      }
+    } else {
+      return $("input[name='int-"+meta.row+"-"+iindex+"']").val();
+    }
+  }
+{% endif %}
+  return data;
+}
+
+function renderChangeOffer(data, type, row, meta) {
+{% if state_enter_offers %}
+  if (type === "display") {
+    if (!use_all_colleges && !offerable(row["rank"])) return data;
+    var jr = meta.row;
+    var td = [];
+    td.push("<select class='inblanks' name='crs-" + jr + "' onchange='enable_save()'>");
+    td.push("<option value=''></option>");
+    td.push("<option value='q'>Phys</option>");
+    if (row["course"] == "P" || row["course"] == "Q") {
+      td.push("<option value='p'>PhysPhil</option>");
+    }
+    td.push("<option value='f'>Flag</option><option value='0'>Revoke&nbsp;&nbsp;</option></select>")
+    return td.join('');
+  } else {
+    return $("select[name='crs-"+meta.row+"']").val();
+  }
+{% endif %}
+  return data;
+}
+
+function renderJelleyScore(data, type, row, meta) {
+  //console.log("row[pp] = " + row["pp"]);
+  //console.log("row[i1] = " + row["i1"]);
+  //console.log("row[i2] = " + row["i2"]);
+  //console.log("row[i3] = " + row["i3"]);
+  var pm = 0.0;
+  var pp = 0.0;
+  var i1 = 0.0;
+  var i2 = 0.0;
+  var i3 = 0.0;
+  if ("pm" in row && row["pm"].length > 0) pm = parseFloat(row["pm"]);
+  if ("pp" in row && row["pp"].length > 0) pp = parseFloat(row["pp"]);
+  if ("i1" in row && row["i1"].length > 0) i1 = parseFloat(row["i1"]);
+  if ("i2" in row && row["i2"].length > 0) i2 = parseFloat(row["i2"]);
+  if ("i3" in row && row["i3"].length > 0) i3 = parseFloat(row["i3"]);
+  var js = WPATM*pm + WPATP*pp + WINT1*(i1 + i2) + WINT2*i3;
+  return js.toFixed(1).toString();
+}
+
+function renderName(data, type, row, meta) {
+  if (type == "display") {
+    return "<a href='/static/ucas/" + row["det"].id + ".pdf' target='_blank'>" + data + "</a>";
+  } else {
+    return data;
+  }
+}
+
+function renderCommentCount(data, type, row, meta) {
+  if ("comments" in row) {
+    return row["comments"].length;
+  } else {
+    return 0;
+  }
+}
+
+var row2pk = [];
+var pk2row = [];
+
+// remember that for unit results, we need to "unescape" HTML entities
+// using HTMLParser.HTMLParser().unescape(string)
+$(document).ready(function() {
+  var spec = {
+    "dom": 'TC<"clear">lfrtip', // add an R to use colReorder
+    "ajax": {
+      'url': '/static/json/{{ college.adss_code }}.json',
+      'dataSrc': function(json) {
+      // make an array which matches rows to pk's
+      json.data.forEach(function(d,j) {
+        row2pk[j] = d.pk;
+        pk2row[d.pk] = j;
+        //console.log("Fill pk2row[" + d.pk + "] with " + j);
+      });
+      // check for encrypted interview marks
+      var scoredatacrypts = json.data[0]["more"];
+      if (typeof scoredatacrypts === 'undefined') return json.data;
+      scoredatacrypts.forEach(function(d,j) {
+        if (d.c in collegekey) {
+          //console.log("Score data for " + d.c);
+          //console.log("Crypt text (base64) is " + d.d);
+          var key = CryptoJS.enc.Latin1.parse(collegekey[d.c]);
+          var rawData = atob(d.d);
+          var iv = rawData.substring(0,16);
+          var crypttext = rawData.substring(16);
+          var plaintextarray = CryptoJS.AES.decrypt(
+                               {ciphertext: CryptoJS.enc.Latin1.parse(crypttext)},
+                               key,
+                               {iv: CryptoJS.enc.Latin1.parse(iv)});
+          var plaintext = CryptoJS.enc.Latin1.stringify(plaintextarray);
+          //console.log(plaintext);
+          var plaindata = JSON.parse(plaintext);
+          plaindata.data.forEach(function(d) {
+            var jr = pk2row[d.pk];
+            if (typeof jr === 'undefined') return;
+            $.each(d, function(k,v) {
+              if (k == "pk" || k == "id") return true; // keep iterating
+              json.data[jr][k] = v;
+              
+            });
+          });
+        }
+      });
+      return json.data;
+    }
+    },
+    "pageLength": 50,
+    "columns": [
+      {
+        "class": 'details-control',
+        "orderable": false,
+        "data": null,
+        "defaultContent": ''
+      },
+      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeState },
+      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol1 },
+      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol1 },
+      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol2 },
+      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol1 },
+      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol2 },
+      { "data": null, "visible": false, "defaultContent": '', "orderable": false, "visible": false }, // spare
+      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeOffer },
+      { "data": "status", "name": "status", "class": "stateinfo", "defaultContent": '' },
+      { "data": "offer", "name": "offer", "defaultContent": '', "visible": false }, // spare
+      { "data": "pm", "type": "num" },
+      { "data": "pp", "type": "num" },
+      { "data": "pt", "type": "num", "visible": false },
+      { "data": "i1", "name": "i1", "type": "num", "class": "stateinfo" },
+      { "data": "i2", "name": "i2", "type": "num", "class": "stateinfo" },
+      { "data": "i3", "name": "i3", "type": "num", "class": "stateinfo" },
+      { "data": "i4", "name": "i4", "type": "num", "class": "stateinfo", "visible": false },
+      { "data": "i5", "name": "i5", "type": "num", "class": "stateinfo", "visible": false },
+      { "data": "cmts", "name": "nc", "type": "num", "defaultContent": '0', "class": "comments-detail", "render": renderCommentCount },
+      { "data": null, "type": "num", "render": renderJelleyScore }, // was js column
+      { "data": "rank", "type": "num" },
+      { "data": "name", "render": renderName },
+      { "data": "c1", "name": "col1" },
+      { "data": "c2", "name": "col2" },
+      { "data": "c3", "name": "col3", "visible": false },
+      { "data": "c4", "name": "col4", "visible": false },
+      { "data": "c5", "name": "col5", "visible": false },
+      { "data": "c6", "name": "col6", "visible": false },
+      { "data": "y", "type": "num" },
+      { "data": "course" },
+      { "data": "g", "searchable": false },
+      { "data": "scht", "class": "school-detail" },
+      { "data": "sdm", "type": "num" },
+      { "data": "astar", "searchable": false, "class": "obtained-detail" },
+      { "data": "pred", "searchable": true, "class": "predicted-detail" },
+      { "data": "obt", "searchable": true, "class": "obtained-detail" },
+      { "data": "care", "orderable": false, "searchable": false },
+      { "data": "gcse", "orderable": false, "searchable": false },
+      { "data": "alev", "orderable": false, "searchable": false },
+      { "data": "offa", "orderable": false, "searchable": false },
+      { "data": "acorn", "orderable": false, "searchable": false },
+      { "data": "polar", "orderable": false, "searchable": false },
+      { "data": "access", "orderable": false, "searchable": false },
+      { "data": "ovf", "searchable": false },
+      { "data": "det.id", "visible": false }
+    ],
+    "colVis": {
+      "exclude": [ "all" ],
+      "groups": [
+        { title: "Edit", columns: [ 1, 2, 3, 4, 5, 6, 8 ] },
+        //{ title: "Offer", columns: [ 10 ] },
+        { title: "PAT", columns: [11, 12] },
+        { title: "PAT Total", columns: [13] },
+        { title: "Interviews", columns: [14, 15, 16, 19] },
+        { title: "Interviews (Phil)", columns: [17, 18] },
+        { title: "Jelley Score", columns: [20, 21] },
+        { title: "Colleges (2)", columns: [23, 24] },
+        { title: "Colleges (other)", columns: [25, 26, 27, 28] },
+        { title: "Course", columns: [ 29, 30] },
+        { title: "Misc", columns: [ 31, 32, 33, 34 ] },
+        { title: "Predicted", columns: [35] },
+        { title: "Obtained", columns: [36] },
+        { title: "Contextual", columns: [37, 38, 39, 40, 41, 42, 43, 44] },
+        { title: "UCAS id", columns: [45] }
+      ],
+      "restore": "Restore",
+      "showAll": "Show all",
+      "showNone": "Show none"
+    },
+    "order": [ [ 23, "asc" ], [22, "asc"] ],
+    "statesave": true,
+    "tableTools": {
+      "aButtons": [
+        "copy",
+        "csv",
+        {
+          "sExtends": "pdf",
+          "sPdfOrientation": "landscape"
+        },
+        "print"
+      ],
+      "sSwfPath": '{% static "js/DataTables-1.10.2/extensions/TableTools/swf/copy_csv_xls_pdf.swf" %}'
+    }
+  };
+  var table = $('#candidates').DataTable(spec);
+
+  $('#candidates').on('xhr.dt', function(e, settings, json) {
+
+    // get base timestamp of this json document
+    basetimestamp = json.data[0]["timestamp"];
+    //console.log("base time stamp = " + basetimestamp);
+
+    // get state information
+    $.getJSON("{{ states_url }}?t="+basetimestamp, fillstate);
+    //$.getJSON("/admissions/api/states/?t="+basetimestamp, fillstate);
+    //$.getJSON("/static/json/test-state.json", fillstate);
+  } );
+
+  // Add event listener for opening and closing details
+  $('#candidates tbody').on('click', 'td.details-control', function () {
+    var tr = $(this).closest('tr');
+    var row = table.row( tr );
+ 
+    if ( row.child.isShown() ) {
+      // This row is already open - close it
+      // (this is different from other child rows:  close unconditionally,
+      // rather than as if it was a toggle)
+      row.child.hide();
+      tr.removeClass("shown shown-school shown-predicted shown-obtained shown-comments");
+    } else {
+      // Open this row
+      row.child( format_detail(row.data()["det"],row.data()["pk"]) ).show();
+      tr.removeClass("shown-school shown-predicted shown-obtained shown-comments")
+        .addClass('shown');
+    }
+  } )
+  .on('click', 'td.school-detail', function() {
+    var tr = $(this).closest('tr');
+    var row = table.row( tr );
+    if (tr.hasClass('shown-school')) {
+      row.child.hide();
+      tr.removeClass("shown shown-school shown-predicted shown-obtained shown-comments");
+    } else {
+      var child = row.child( format_schools(row.data()["detsch"],row.data()["pk"]) );
+      tr.removeClass("shown shown-predicted shown-obtained shown-comments")
+        .addClass('shown-school');
+      if ( !row.child.isShown() ) child.show();
+    }
+  } )
+  .on('click', 'td.obtained-detail', function() {
+    var tr = $(this).closest('tr');
+    var row = table.row( tr );
+    if (tr.hasClass('shown-obtained')) {
+      row.child.hide();
+      tr.removeClass("shown shown-school shown-predicted shown-obtained shown-comments");
+    } else {
+      var child = row.child( format_quals(row.data()["detobt"],row.data()["pk"]) );
+      tr.removeClass("shown shown-school shown-predicted shown-comments")
+        .addClass('shown-obtained');
+      if ( !row.child.isShown() ) child.show();
+    }
+  } )
+  .on('click', 'td.predicted-detail', function() {
+    var tr = $(this).closest('tr');
+    var row = table.row( tr );
+    if (tr.hasClass('shown-predicted')) {
+      row.child.hide();
+      tr.removeClass("shown shown-school shown-predicted shown-obtained shown-comments");
+    } else {
+      var child = row.child( format_predicted_quals(row.data()["detpred"],row.data()["pk"]) );
+      tr.removeClass("shown shown-school shown-obtained shown-comments")
+        .addClass('shown-predicted');
+      if ( !row.child.isShown() ) child.show();
+    }
+  } )
+  .on('click', 'td.comments-detail', function() {
+    var tr = $(this).closest('tr');
+    var row = table.row( tr );
+    if (tr.hasClass('shown-comments')) {
+      row.child.hide();
+      tr.removeClass("shown shown-school shown-predicted shown-obtained shown-comments");
+    } else {
+      var child = row.child( format_comments(row.data()["comments"], row.index()) );
+      tr.removeClass("shown shown-school shown-predicted shown-obtained")
+        .addClass('shown-comments');
+      if (!row.child.isShown()) child.show();
+    }
+  } )
+
+  // get college list
+  $.get("/admissions/api/collegelist/", function(data) {
+    select = $('#scol');
+    data.forEach(function(d,j) {
+      select.append('<option value="' + d.fields.adss_code +
+                    '">' + d.fields.name +
+                    '</option>');
+    });
+    if (college_list_code != "ALL" && college_list_code != "APP") {
+      select.val(college_list_code);
+    }
+  });
+
+// look at https://docs.djangoproject.com/en/1.6/ref/contrib/csrf/#ajax
+// and http://stackoverflow.com/questions/19333098/403-forbidden-error-when-making-an-ajax-post-request-in-django-framework
+  $('#savebutton').click(function() {
+    disable_save();
+
+    // validate and save
+    var changes = [];
+    var msg = [ "Error messages:<ul>" ];
+    // following line originally started with table.$()...
+    table.$('.inblanks').each(function(i,e) {
+      //console.log("save:  name=" + e.name + " value=" + e.value);
+      if (e.value.length > 0) {
+        //changes.push({ "n": e.name, "v": e.value });
+        var fields = e.name.split('-');
+        var rowdata = table.row(parseInt(fields[1])).data();
+        var pk = rowdata["pk"];
+        if (!(pk in changes)) {
+          changes[pk] = { "id": rowdata["det"].id, "f": [] };
+        }
+        var ch = { "v": e.value };
+        if (fields[0] == 'int') {
+          var iv = parseFloat(e.value);
+          if (iv < 1 || iv > 10) {
+            msg.push("<li>" + rowdata["name"] + ":  interview " + fields[2] + " out of range (" + iv + ")</li>");
+            ch.n = '';
+          } else {
+            ch.n = "i"+fields[2];
+          }
+        } else {
+          ch.n = fields[0];
+        }
+        changes[pk].f.push(ch);
+      }
+    });
+
+    // get comments from textareas.  For some reason I can't merge this with the above
+    // and still have jquery find the textareas.
+    $("textarea").each(function(i,e) {
+      //console.log("save:  name=" + e.name + " value=" + e.value);
+      if (e.value.length > 0) {
+        var fields = e.name.split('-');
+        var rowdata = table.row(parseInt(fields[1])).data();
+        var pk = rowdata["pk"];
+        if (!(pk in changes)) {
+          changes[pk] = { "id": rowdata["det"].id, "f": [] };
+        }
+        var ch = { "n": "comment", "v": e.value };
+        changes[pk].f.push(ch);
+      }
+    });
+
+    if (msg.length > 1) {
+      msg.push("</ul>");
+      $("#messages").html(msg.join(''));
+      return false;
+    } else {
+      $("#messages").html("");
+    }
+
+    // don't post an empty list of changes
+    if (changes.length <= 0) {
+      //console.log("No changes");
+      return false;
+    }
+
+    clearblanks();
+
+    // post back to server
+    // reduce json by turning pk into a field
+    var tosave = [{ "pk":0, "scol":$('#scol').val()}];
+    changes.forEach(function(d,j) {
+      tosave.push({ "pk": j, "id": d.id, "f": d.f });
+    });
+    //console.log("reduced json dump = " + JSON.stringify(tosave));
+
+    $.post("{{ states_url }}?t="+basetimestamp, JSON.stringify(tosave), fillstate, "json");
+
+    return false;
+  });
+
+  $('#reloadbutton').click(function() {
+    disable_save();
+    $.getJSON("{{ states_url }}?t="+basetimestamp, fillstate);
+  });
+
+  $('#resetbutton').click(function() {
+    disable_save();
+    clearblanks();
+  });
+
+  function clearblanks() {
+    // clear inputs
+    table.$('.inblanks').each(function(i,e) {
+      $(e).val('');
+    });
+    $("textarea").each(function(i,e) {
+      $(e).val('');
+    });
+    $('.shown-comments').each(function(i,e) {
+      var tr = $(e).closest('tr');
+      var row = table.row( tr );
+      if (row.child.isShown()) {
+        row.child.hide();
+        tr.removeClass('shown');
+        tr.removeClass('shown-comments');
+      }
+    });
+
+  }
+
+  function fillstate(data) {
+    //console.log("data received:  " + JSON.stringify(data));
+    // need to add to table data and redraw
+    var smod = { "order":"original", "search":"none", "page":"all" };
+    //var cs = table.columns(".stateinfo", smod);
+    //var csd = cs.data();
+    // csd[0] is status, csd[1] is i1, etc.
+
+    //console.log("cs indexes length = " + cs.indexes().length);
+    //var tc = table.column("status:name").index();
+    //console.log("tc index length = " + tc.length + " value = " + tc);
+    //for (e in tc) console.log("  tc[" + e + "] = " + tc[e]);
+
+    //var istat = table.column("status:name").index();
+    //var ii1 = table.column("i1:name").index();
+    //var ii2 = table.column("i2:name").index();
+    //var ii3 = table.column("i3:name").index();
+    //var ii4 = table.column("i4:name").index();
+    //var ii5 = table.column("i5:name").index();
+    //var inc = table.column("nc:name").index();
+
+    data.forEach(function(d,j) {
+      if (d.pk == 0) {
+        // messages back from server
+        msg = [ "From server:<ul>" ];
+        d.msg.forEach(function(d,j) {
+          msg.push(d);
+        });
+        msg.push("</ul>");
+        $("#messages").html(msg.join(''));
+      } else {
+        $("#messages").html('');
+      }
+      //console.log("pk = " + d.pk);
+      var jr = pk2row[d.pk];
+      //console.log("jr = " + jr + " out of " + pk2row.length);
+      if (typeof jr === 'undefined') return;
+      var rsd = table.row(jr).data();
+      if (typeof rsd == 'undefined') {
+        //console.log("Table row " + jr + " undefined");
+        return;
+      }
+      //console.log("pk=" + d.pk + ", row=" + jr + ", old=" + rsd["status"] + ", new=" + d.state);
+
+      var changed = false;
+      $.each(d, function(k,v) {
+        if (k == "pk" || k == "id") return true; // keep iterating
+        if (k == "state") k = "status";
+        if (k != "comments" && !(k in rsd)) return true; // not in row data rsd
+        if (rsd[k] != v) {
+          //if (k == "comments") {
+          //  table.cell(jr, inc, smod).data(v.length); // now incorrect; assumes all comments in state
+          //}
+          rsd[k] = v;
+          changed = true;
+        }
+      });
+      if (changed) table.row(jr).data(rsd);
+
+      //var ds = d.state ? d.state : "";
+      //if (rsd["status"] != ds) rsd["status"] = d.state;
+      //rsd["i1"] = d.i1 ? d.i1 : "";
+      //rsd["i2"] = d.i2 ? d.i2 : "";
+      //rsd["i3"] = d.i3 ? d.i3 : "";
+      //rsd["i4"] = d.i4 ? d.i4 : "";
+      //rsd["i5"] = d.i5 ? d.i5 : "";
+      //rsd["i6"] = d.i6 ? d.i6 : "";
+      //if ("comments" in d) {
+      //  var dc = d.comments;
+      //  table.cell(jr, inc, smod).data(dc.length);
+      //  rsd["comments"] = dc;
+      //} else {
+      //  table.cell(jr, inc, smod).data(0);
+      //}
+      //table.row(jr).data(rsd);
+    });
+
+    table.draw();
+
+  }
+
+  // :visIdx?
+
+  // college filter
+  var choicecols = [];
+  choicecols[0] = table.column('status:name').index();
+  for (var i = 1; i <= 6; ++i) {
+    choicecols[i] = table.column('col'+i+':name').index();
+    //console.log("choicecol[" + i + "] = " + choicecols[i]);
+  }
+  $.fn.dataTableExt.afnFiltering.push(function( oSettings, aData, iDataIndex ) {
+    //console.log("  explicit " + aData[15]);
+    if ($('#scolx').prop('checked')) {
+      return (aData[choicecols[0]].indexOf('[') < 0);
+    }
+    var choice = $('#scol').val();
+    if (choice.length == 0) {
+      if ($('#scolf').prop('checked')) {
+        return (aData[choicecols[0]].indexOf("(") >= 0);
+      } else {
+        return true; // no filtering
+      }
+    }
+    var used = false;
+    if ($('#scol0').prop('checked')) {
+      //offermatch = new RegExp('^[34P]\[' + choice + '\]$');
+      used = true;
+      //if (offermatch.test(aData[choicecols[0]])) return true;
+      if (aData[choicecols[0]].indexOf(choice) >= 0) return true;
+    }
+    if ($('#scolf').prop('checked')) {
+      used = true;
+      if (aData[choicecols[0]].indexOf(choice.toLowerCase()) >= 0) return true;
+    }
+    for (var i = 1; i <= 6; ++i) {
+      if ($('#scol'+i).prop('checked')) {
+        used = true;
+        //console.log("check " + i + " col " + choicecols[i] + " value " + aData[choicecols[i]] + " against " + choice);
+        if (aData[choicecols[i]] == choice) return true;
+      }
+    }
+    return !used;
+  } );
+
+  $('.csel').on('click change', function() { table.draw() } );
+
+} );
+</script>
+{% endblock %}

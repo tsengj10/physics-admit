@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+{% load url from future %}
+{% load static %}
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>{% block title %}Physics Admissions Database{% endblock %}</title>
+<style>
+* {font-family:sans-serif}
+table {font-size:10px;text-align:center;}
+th {font-weight:normal;}
+th.college_stats {font-size:13px;}
+th span {font-weight:bold;}
+.deferred {color:red;}
+
+/* Widening Participation overall flag */
+.wpY {font-weight:bold;}
+
+/* Further maths results */
+.fmaths {color:blue;}
+
+.errorlist {background:#ffcccc; color: red; border: 1px solid red;}
+/* .fieldWrapper {border: 1px solid silver;} */
+.helptext {
+    font-style:italic;
+    font-size:0.8em;
+    padding-left:1.2em;
+    background:url('{% static 'admissions/images/help.svg' %}') no-repeat;
+    background-position:0.1em 0.1ex;
+    background-size:auto 1em;
+    }
+td .helptext{font-size:1em;}
+</style>
+{% block head %}
+{% endblock %}
+</head>
+<body>
+<h1>Physics Admissions Database</h1>
+{% block content %}
+
+{% endblock %}
+
+<p><a href="{% url 'admissions:colleges' %}">[Return to college list]</a>
+&nbsp;
+<a href="{% url 'admissions:notes' %}" target='_blank'>[Notes on using the system]</a>
+&nbsp;
+<a href="{% static 'documents' %}" target='_blank'>[Other documents]</a>
+</p>
+{% if user.is_authenticated %}
+<hr />
+<p>You are logged in as {{ user }} <a href="{% url 'webauth.views.logout' %}">(Log out)</a></p>
+<hr />
+<p>This information is <b>CONFIDENTIAL</b>. Read the <a href="/consent/">Data Protection Statement</a> for further details.</p>
+{% endif %}
+
+{% block scripts %}
+
+{% endblock %}
+</body>
+</html>

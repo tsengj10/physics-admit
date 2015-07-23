@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions database - edit college {{ college.name }} ({{ college.adss_code }})
+{% endblock %}
+{% block content %}
+<h2>College: {{ college.name }} ({{ college.adss_code }})</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ college_form.non_field_errors }}
+    <table border="0">
+    {% for field in college_form %}
+    <tr><td class="fieldWrapper" align="right" title="{{ field.help_text }}">{{ field.label_tag }}
+            {{ field.errors }}
+        </td>
+        <td class="fieldWrapper" align="left">{{ field }}</td></tr>
+    {% endfor %}
+    </table>
+    <input type="hidden" name="next" value="{{ return_to }}" />
+    <input type="submit" value="Update" />
+</form>
+{% endblock %}
