@@ -259,13 +259,13 @@ function offerable(rank) {
 }
 
 {% if college.adss_code == 'ALL' %}
-  {% url 'admissions:all_applicants_js' as the_url %}
-  {% url 'admissions:api_all_student_states' as states_url %}
+  {% url 'admissions:active_applicants' as the_url %}
+  {% url 'admissions:api_student_states' as states_url %}
 {% elif college.adss_code == 'APP' %}
-  {% url 'admissions:every_applicants_js' as the_url %}
-  {% url 'admissions:api_all_student_states' as states_url %}
+  {% url 'admissions:all_applicants' as the_url %}
+  {% url 'admissions:api_student_states' as states_url %}
 {% else %}
-  {% url 'admissions:college_applicants_js' college.adss_code|lower as the_url %}
+  {% url 'admissions:college_applicants' college.adss_code|lower as the_url %}
   {% url 'admissions:api_student_states' college_code=college.adss_code|lower as states_url %}
 {% endif %}
 
