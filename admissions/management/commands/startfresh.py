@@ -10,9 +10,9 @@ class Command(BaseCommand):
   help = 'Start a new database instance from scratch'
 
   def handle(self, *args, **options):
-    #load_college_table()
-    #load_school_types()
-    #load_qual_types()
+    load_college_table()
+    load_school_types()
+    load_qual_types()
     create_college_groups()
     # may want to load a user table as well
     ovs = OverallState(state=OverallState.DEVELOPMENT)
