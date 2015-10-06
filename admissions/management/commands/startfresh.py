@@ -26,7 +26,7 @@ def load_college_table():
       if firstline:
         firstline = 0
       else:
-        p, created = College.objects.get_or_create(adss_code=row[1],
+        p, created = College.objects.update_or_create(adss_code=row[1],
                        defaults={'name' : row[0],
                                  'total_places' : int(row[2]),
                                  'physphil_places' : int(row[3]),
@@ -44,7 +44,7 @@ def load_school_types():
       if firstline:
         firstline = 0
       else:
-        p, created = PhysicsSchoolType.get_or_create(adss_type=row[0],
+        p, created = PhysicsSchoolType.update_or_create(adss_type=row[0],
                        defaults={'adss_description' : row[1],
                                  'physics_type' : row[2]})
         if created:
@@ -66,7 +66,7 @@ def load_qual_types():
       if firstline:
         firstline = 0
       else:
-        p, created = QualificationType.get_or_create(name=row[0],
+        p, created = QualificationType.update_or_create(name=row[0],
                        defaults={'exam_type' : row[1],
                                  'dual_award' : toBoolean(row[2]),
                                  'short_course' : toBoolean(row[3]),
@@ -88,14 +88,14 @@ def create_college_groups():
     ps.append(Permission.objects.get(codename=pn))
   colleges = College.objects.all()
   for college in colleges:
-    group, created = Group.objects.get_or_create(name=college.adss_code,
+    group, created = Group.objects.update_or_create(name=college.adss_code,
                        defaults={'permissions' : ps})
     if created:
       print('Created user group "{1}" for "{0}"'.format(college, group))
     else:
       print('Updated user group "{1}" for "{0}"'.format(college, group))
   # and then add a read-only group
-  group, created = Group.objects.get_or_create(name='Readonly')
+  group, created = Group.objects.update_or_create(name='Readonly')
   if created:
     print('Created Readonly user group')
   else:

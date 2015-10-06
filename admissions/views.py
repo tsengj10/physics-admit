@@ -17,9 +17,9 @@ def get_colleges_for_user(u):
     return [c for g in u.groups.all() for c in colleges if g.name == c.adss_code]
 
 def get_college_codes_for_user(u):
-    colleges = College.objects.all()
     if u.is_superuser or u.is_staff:
         return ['ALL']
+    colleges = College.objects.all()
     clist = []
     for g in u.groups.all():
         for c in colleges:
@@ -28,47 +28,16 @@ def get_college_codes_for_user(u):
     return clist
 
 def get_college_keys_for_user(u):
-    # load college keys
-    all_college_keys = [
-      { 'c':"BAL", 'k':"zKiooSeKTRmFviNx" },
-      { 'c':"BNC", 'k':"Pf2hs8rLFb9ieshH" },
-      { 'c':"CCH", 'k':"Yg7hp836sL6G3MuX" },
-      { 'c':"CCC", 'k':"HiqOaoPw4ptDKrTW" },
-      { 'c':"EXT", 'k':"f9RvcV9vTyrab1UN" },
-      { 'c':"HTF", 'k':"bnhp7wzpR55AHoMu" },
-      { 'c':"HOG", 'k':"5GzeBgtqyMscRpOB" },
-      { 'c':"JES", 'k':"JewwbCc2Bb52e5j7" },
-      { 'c':"KBL", 'k':"pW2Ww5LdQrcz3TGL" },
-      { 'c':"LMH", 'k':"GBW0TxD24j5Mo7C3" },
-      { 'c':"LIN", 'k':"QkKBxLFTcVEyMhhF" },
-      { 'c':"MAG", 'k':"QCc2dtuICm1RG3M2" },
-      { 'c':"MAN", 'k':"ybhZXKOrwoDmJpW2" },
-      { 'c':"MER", 'k':"teHw6uPcNVW9u5c1" },
-      { 'c':"NEW", 'k':"7RdwBNwr8Mn9XqCA" },
-      { 'c':"ORL", 'k':"9UznZ4N36HERYtdE" },
-      { 'c':"PBK", 'k':"nsrK2DMRoeb5BT0Q" },
-      { 'c':"QNS", 'k':"2eRwCymdMfmbyaV2" },
-      { 'c':"SOM", 'k':"0F43Z6Vl0VfRyKjt" },
-      { 'c':"STA", 'k':"HbzBBPGlUXu2ZSqX" },
-      { 'c':"STC", 'k':"Oa3I9xnz4rMcg58x" },
-      { 'c':"SEH", 'k':"VEr7MI1ccLRKPHNn" },
-      { 'c':"SHI", 'k':"p6PHk0Hr6jWTf9z0" },
-      { 'c':"SHU", 'k':"DfSyrHMzcIeZyijG" },
-      { 'c':"STJ", 'k':"Ei8IFju4iPPY5R1P" },
-      { 'c':"STP", 'k':"rxj7nlF8nA1KJLT3" },
-      { 'c':"TRI", 'k':"agr88HjouR7vIKG2" },
-      { 'c':"UNI", 'k':"zY0YYLIAsUeXGYhN" },
-      { 'c':"WAD", 'k':"ptSF2fz3ueTXf9Qn" },
-      { 'c':"WOR", 'k':"ka5IugHpoAKr4Mb4" },
-      ]
-
-    if u.is_superuser or u.is_staff:
-        return all_college_keys
+    colleges = College.objects.all()
     clist = []
-    for g in u.groups.all():
-        for c in all_college_keys:
-            if g.name == c['c']:
-                clist.append(c)
+    if u.is_superuser or u.is_staff:
+        for c in colleges:
+            clist.append({ 'c':c.adss_code, 'k':c.key })
+    else:
+        for c in colleges:
+            for g in u.groups.all():
+                if g.name == c.adss_code:
+                    clist.append({ 'c':g.name, 'k':c.key })
     return clist
 
 #---------------------------------------------------------------
