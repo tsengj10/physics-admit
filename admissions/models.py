@@ -1,8 +1,18 @@
 from django.db import models
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
+import datetime
 
 # Create your models here.
 
 #===========================================================================
+
+def next_matriculation_year():
+    today = datetime.date.today()
+    return (today.year + (today.month > 8))
+
+def present_interview_year():
+    return next_matriculation_year() - 1
 
 class OverallStateManager(models.Manager):
   def current(self):
@@ -34,10 +44,9 @@ class OverallState(models.Model):
     choices=CODES,
     default=PRELIMINARY)
   ranking_phase = models.IntegerField(
-    max_length=1,
     default=0)
 
-  time = models.DateTimeField(auto_now=True, default=datetime.datetime.now,editable=False)
+  time = models.DateTimeField(auto_now=True, editable=False)
 
   objects = OverallStateManager()
 
@@ -72,7 +81,7 @@ class CandidateManager(models.Manager):
     if ranks is None:
       # Generate rankings and cache.  Python and Django are single-
       # threaded so little need to worry about duplicated effort
-      print "Generating ranks"
+      #logger.info("Generating ranks")
       students = self.ranked_order()
       ranks = {x[1].pk:x[0] for x in students}
       cache.set(cache_key, ranks, 60) # 60 seconds of caching should be enough
@@ -218,7 +227,6 @@ class Candidate(models.Model):
     default=0)
 
   modification_timestamp = models.DateTimeField(auto_now=True,
-                                                default=datetime.datetime.now,
                                                 editable=False)
 
   def calc_jell_score(self):
@@ -440,7 +448,7 @@ class Comment(models.Model):
 
 #===========================================================================
 
-class QualificationsManager(models.Manager):
+class QualificationManager(models.Manager):
   COURSETYPE_ALEVEL = "A-level"
   COURSETYPE_ASLEVEL = "AS-level"
   COURSETYPE_GCSE = "GCSE"
@@ -697,8 +705,8 @@ class Offer(models.Model):
   deferred_entry = models.BooleanField(default=False)
   course_type = models.CharField(
     max_length=1,
-    choices=CandidateInfo.COURSE_TYPES,
-    default=CandidateInfo.COURSE_FOURYEAR,
+    choices=Candidate.COURSE_TYPES,
+    default=Candidate.COURSE_FOURYEAR,
     help_text="Offered physics course"
     )
   time = models.DateTimeField(
