@@ -90,7 +90,7 @@ class CandidateManager(models.Manager):
   def ranked_order(self):
     """Property containing all students for the given year, ranked by
     JellScore"""
-    all_students = self.prefetch_related('pat_scores').order_by('-jell_score').all()
+    all_students = self.order_by('-stored_jell_score').all()
     return [x for x in enumerate(all_students, 1)]
 
 class Candidate(models.Model):
@@ -186,7 +186,7 @@ class Candidate(models.Model):
     default=0,
     validators=[MinValueValidator(0), MaxValueValidator(50)]
     )
-  pat_time = models.DateTimeField()
+  pat_time = models.DateTimeField(null=True, blank=True)
 
   interview1 = models.DecimalField(
     max_digits=5,

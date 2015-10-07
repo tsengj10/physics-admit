@@ -83,7 +83,7 @@ def college_list(request):
     template_values = {
         'colleges': colleges,
         'data': json.dumps(collegedata),
-        'year': year,
+        'year': present_interview_year(),
         }
     return render(request, 'admissions/colleges.html', template_values);
 

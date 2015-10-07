@@ -19,7 +19,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 
 urlpatterns = [
-    url(r'^admissions/', include('admissions.urls')),
+    url(r'^accounts/', include('django.contrib.auth.urls')),
+    url(r'^admissions/', include('admissions.urls', namespace='admissions')),
     url(r'^admin/', include(admin.site.urls)),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
