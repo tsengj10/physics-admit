@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from admissions.models import *
 from admissions.forms import *
@@ -83,7 +83,7 @@ def college_list(request):
     template_values = {
         'colleges': colleges,
         'data': json.dumps(collegedata),
-        'year': present_interview_year(),
+        #'year': present_interview_year(),
         }
     return render(request, 'admissions/colleges.html', template_values);
 
@@ -120,10 +120,8 @@ def applicant(request, college_spec):
     'state_longlist':(state in [OverallState.LONGLIST,
                                 OverallState.DEVELOPMENT]),
     'state_enter_interview_marks':(state in [OverallState.SHORTLIST,
-                                             OverallState.RANKING,
                                              OverallState.DEVELOPMENT]),
-    'state_enter_offers':(state in [OverallState.RANKING,
-                                    OverallState.OFFERS,
+    'state_enter_offers':(state in [OverallState.OFFERS,
                                     OverallState.DEVELOPMENT])
     }
   if state == OverallState.SHORTLIST:
@@ -184,12 +182,16 @@ def edit_college(request, college_code, return_to='admissions:colleges'):
 # college list
 #---------------------------------------------------------------
 
-"""login required to pull the college list because it contains number of places"""
-@login_required
 def api_get_colleges(request):
-    response = HttpResponse(content_type='application/json')
-    colleges = College.objects.all()
-    serializers.serialize('json', colleges, stream=response)
+    logger.info("api_get_colleges")
+    #serializers.serialize('json', colleges, stream=response)
+    res = []
+    for c in College.objects.all():
+        res.append({ 'name': c.name,
+                     'adss_code': c.adss_code })
+    logger.info("res = {}".format(res))
+    # TODO:  new json response in django
+    response = HttpResponse(json.dumps(res), content_type='application/json')
     return response
 
 #---------------------------------------------------------------
@@ -377,7 +379,6 @@ def amend_student_state(candidate, data, user, selected_college):
     longlist = overallstate in [ OverallState.DEVELOPMENT, OverallState.LONGLIST ]
     shortlist = overallstate in [ OverallState.DEVELOPMENT, OverallState.SHORTLIST ]
     ranking = overallstate in [ OverallState.DEVELOPMENT,
-                                OverallState.RANKING,
                                 OverallState.OFFERS ]
     msg = []
     save_info = False

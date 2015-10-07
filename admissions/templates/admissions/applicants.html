@@ -2,7 +2,7 @@
 {% load url from future %}
 {% load staticfiles %}
 {% block title %}
-Admissions database - {{ college.name }} applicants (interviews in {{ interview_year }})
+Admissions database - {{ college.name }} applicants
 {% endblock %}
 {% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -74,7 +74,7 @@ p#messages {
 </style>
 {% endblock %}
 {% block content %}
-<h2>College: {{ college.name }} ({% if interview_year != present_interview_year %}Historical data for {% endif %}{{ interview_year }} interviews)</h2>
+<h2>{{ college.name }}</h2>
 
 <table cellspacing="0" cellpadding="3" border="0">
 <tr>

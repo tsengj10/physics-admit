@@ -26,13 +26,8 @@ Please complete rescuing/ring-fencing (&quot;saving&quot) by 8pm on Saturday 22 
 </p>
 -->
 
-{% if year %}
-<p><a href="{% url 'admissions:all_applicants_js'|lower year=year %}">Active applicant list for all colleges</a></p>
-<p><a href="{% url 'admissions:every_applicants_js'|lower year=year %}">Complete applicant list for all colleges</a></p>
-{% else %}
-<p><a href="{% url 'admissions:all_applicants_js'|lower %}">Active applicant list for all colleges</a></p>
-<p><a href="{% url 'admissions:every_applicants_js'|lower %}">Complete applicant list for all colleges</a></p>
-{% endif %}
+<p><a href="{% url 'admissions:active_applicants'|lower %}">Active applicant list for all colleges</a></p>
+<p><a href="{% url 'admissions:all_applicants'|lower %}">Complete applicant list for all colleges</a></p>
 
 <p>
 The above data files contain roughly 4MB of data.
@@ -58,11 +53,7 @@ do not include deferred offers.</p>
 </tr>
 {% for college in colleges %}
 <tr>
-{% if year %}
-  <td><a href="{% url 'admissions:college_applicants_js' college_code=college.adss_code|lower year=year %}">{{ college.name }}</a></td>
-{% else %}
-  <td><a href="{% url 'admissions:college_applicants_js' college_code=college.adss_code|lower %}">{{ college.name }}</a></td>
-{% endif %}
+  <td><a href="{% url 'admissions:college_applicants' college_code=college.adss_code|lower %}">{{ college.name }}</a></td>
   <!--<td><a href="{% url 'admissions:edit_teams' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>-->
   <!--<td><a href="{% url 'admissions:edit_schedule' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>-->
   <td class='cplaces'><a href="{% url 'admissions:edit_college' college_code=college.adss_code|lower %}">{{ college.total_places }}({{ college.physphil_places }})</a></td>
