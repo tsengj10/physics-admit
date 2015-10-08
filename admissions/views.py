@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
+from django.http import JsonResponse
 from admissions.models import *
 from admissions.forms import *
 import json
@@ -189,9 +190,9 @@ def api_get_colleges(request):
     for c in College.objects.all():
         res.append({ 'name': c.name,
                      'adss_code': c.adss_code })
-    logger.info("res = {}".format(res))
-    # TODO:  new json response in django
-    response = HttpResponse(json.dumps(res), content_type='application/json')
+    #logger.info("res = {}".format(res))
+    response = JsonResponse({'data':res})
+    #logger.info("about to return response")
     return response
 
 #---------------------------------------------------------------

@@ -522,6 +522,10 @@ function renderJelleyScore(data, type, row, meta) {
   //console.log("row[i1] = " + row["i1"]);
   //console.log("row[i2] = " + row["i2"]);
   //console.log("row[i3] = " + row["i3"]);
+  var WPATM = 1.0;
+  var WPATP = 1.0;
+  var WINT1 = 3.0;
+  var WINT2 = 4.0;
   var pm = 0.0;
   var pp = 0.0;
   var i1 = 0.0;
@@ -781,9 +785,9 @@ $(document).ready(function() {
   // get college list
   $.get("/admissions/api/collegelist/", function(data) {
     select = $('#scol');
-    data.forEach(function(d,j) {
-      select.append('<option value="' + d.fields.adss_code +
-                    '">' + d.fields.name +
+    data.data.forEach(function(d,j) {
+      select.append('<option value="' + d.adss_code +
+                    '">' + d.name +
                     '</option>');
     });
     if (college_list_code != "ALL" && college_list_code != "APP") {

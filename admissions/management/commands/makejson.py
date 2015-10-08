@@ -379,6 +379,7 @@ class Command(BaseCommand):
         j['scht'] = sch.school_type.physics_type
         usepost = True
       schd.append(sdet)
+    self.stdout.write("School list for {}:  {}".format(name, schd))
 
     # sort first by start date, and then school id (school details not reliably well formed)
     # (this depends on python sort order being stable, which is true after python 2.2)
