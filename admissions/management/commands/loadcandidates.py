@@ -123,14 +123,21 @@ class Command(BaseCommand):
                 det = row[9]
             else:
               det = row[4]
-            sch, created = School.objects.update_or_create(student = students[row[7]].info,
+            sdate = date(month = int(row[5]),
+                         year = int(row[11].replace(',','')),
+                         day = 1)
+            edate = date(month = int(row[6]),
+                         year = int(row[12].replace(',','')),
+                         day = 1)
+            sch, created = School.objects.update_or_create(
+                    student = students[row[7]].info,
+                    ucas_school_id = row[8], 
+                    start_date = sdate,
+                    end_date = edate,
                     defaults = {
                       'application_scheme': row[1],
-                      'start_date': date(month = int(row[5]), year = int(row[11].replace(',','')), day=1),
-                      'end_date': date(month = int(row[6]), year = int(row[12].replace(',','')), day=1),
                       'school_details': det,
                       'school_type': PhysicsSchoolType.objects.get(adss_type=(row[13] if row[13] else "U")),
-                      'ucas_school_id': row[8],
                       'attendance': row[2]})
             self.stdout.write('School {0} {1}'.format(sch, 'created' if created else 'updated'))
 
@@ -144,13 +151,17 @@ class Command(BaseCommand):
         else:
           if row[5] in students.keys():
             #self.stdout.write("Qualification {0} for student {1}".format(row[14],row[5]))
-            q, created = Qualification.objects.update_or_create(student = students[row[5]].info,
+            qdate = date(month = int(row[7]),
+                         year = int(row[8].replace(',','')),
+                         day = 1)
+            q, created = Qualification.objects.update_or_create(
+                  student = students[row[5]].info,
+                  title = row[14],
+                  award_body = row[2],
+                  qualification_date = qdate,
                   defaults = {
                     'application_scheme': row[1],
-                    'qualification_date': date(month = int(row[7]), year = int(row[8].replace(',','')), day=1),
                     'qualification_type': QualificationType.objects.get(name=row[10]) if row[10] else None,
-                    'award_body': row[2],
-                    'title': row[14],
                     'result': row[12],
                     'grade': row[6] if len(row[6]) > 0 else row[4],
                     'predicted_grade': (len(row[6]) > 0),
