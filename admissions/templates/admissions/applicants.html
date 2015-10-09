@@ -311,10 +311,6 @@ function format_detail(d,pk) {
            '</td></tr>');
   }
   s.push('</table>');
-{% if can_edit %}
-  s.push('<p><a href="/admissions/applicants/' + pk + '/?next={{ the_url }}">Edit details</a></p>');
-  //s.push('<p><a href="/admissions/slotsbyc/' + pk + '">Edit interview slots</a></p>');
-{% endif %}
   return s.join('');
 }
 
@@ -332,9 +328,6 @@ function format_schools(d,pk) {
            '</td></tr>');
   }
   s.push('</table>');
-{% if can_edit %}
-  s.push('<p><a href="/admissions/schools/' + pk + '/?next={{ the_url }}">Edit education history</a></p>');
-{% endif %}
   return s.join('');
 }
 
@@ -352,9 +345,6 @@ function format_predicted_quals(d,pk) {
     s.push('</td></tr>');
   }
   s.push('</table>');
-{% if can_edit %}
-  s.push('<p><a href="/admissions/quals/' + pk + '/?next={{ the_url }}">Edit qualifications</a></p>');
-{% endif %}
   return s.join('');
 }
 
@@ -373,9 +363,6 @@ function format_quals(d,pk) {
     s.push('</td></tr>');
   }
   s.push('</table>');
-{% if can_edit %}
-  s.push('<p><a href="/admissions/quals/' + pk + '/?next={{ the_url }}">Edit qualifications</a></p>');
-{% endif %}
   return s.join('');
 }
 
@@ -393,7 +380,6 @@ function format_comments(d,jrow) {
     }
     s.push('</ul></p>');
   }
-  //s.push('<p><a href="/admissions/comments/' + pk + '">Edit comments</a></p>');
   s.push("<p><textarea name='comment-" + jrow +
          "' rows='3' cols='50' onchange='enable_save()'></textarea></p>");
   s.push("<p>Use &quot;Save&quot; button to save comment.  ");
@@ -864,11 +850,11 @@ $(document).ready(function() {
 
     // post back to server
     // reduce json by turning pk into a field
-    var tosave = [{ "pk":0, "scol":$('#scol').val()}];
+    var tosave = [{ "pk":0, "scol":$('#scol').val(), "t":basetimestamp}];
     changes.forEach(function(d,j) {
       tosave.push({ "pk": j, "id": d.id, "f": d.f });
     });
-    console.log("reduced json dump = " + JSON.stringify(tosave));
+    //console.log("reduced json dump = " + JSON.stringify(tosave));
 
     $.post("{{ states_url }}?t="+basetimestamp, JSON.stringify(tosave), fillstate, "json");
 
@@ -906,7 +892,7 @@ $(document).ready(function() {
   }
 
   function fillstate(data) {
-    console.log("data received:  " + JSON.stringify(data));
+    //console.log("data received:  " + JSON.stringify(data));
     // need to add to table data and redraw
     var smod = { "order":"original", "search":"none", "page":"all" };
     //var cs = table.columns(".stateinfo", smod);

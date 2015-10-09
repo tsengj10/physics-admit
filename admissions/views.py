@@ -369,9 +369,9 @@ def amend_student_state(candidate, data, user, selected_college):
     # * that user has permission to change these states
     # * that the values are valid (such as the state string)
     # (this method can't change comments - use normal django form for that)
-    logger.info("amend with user " + user.last_name)
+    #logger.info("amend with user " + user.last_name)
     clist = get_college_codes_for_user(user)
-    logger.info("amend with clist {}".format(clist))
+    #logger.info("amend with clist {}".format(clist))
     #logger.info("Amend col1={}, col2={}, clist={}".format(ap.college1.adss_code,ap.college2.adss_code,clist))
     #logger.info("amend with selected college " + selected_college)
     incol1 = "ALL" in clist or (candidate.college1 and candidate.college1.adss_code in clist)
@@ -386,7 +386,7 @@ def amend_student_state(candidate, data, user, selected_college):
     for e in data['f']:
         ef = e['n']
         ev = e['v']
-        logger.info("amend field " + ef + " to value " + ev)
+        #logger.info("amend field " + ef + " to value " + ev)
         okay = False # indicates whether amendemnt was authorized
         if ef in [ 'sel', 'i1', 'i2', 'i3', 'i4', 'i5', 'crs' ]:
             ev = ev.upper()
@@ -520,64 +520,76 @@ def amend_student_state(candidate, data, user, selected_college):
 # get or post student states
 #---------------------------------------------------------------
 
+def post_student_states(body, user):
+  #logger.info("post_student_states body = " + body)
+  msg = []
+  selected_college = ""
+  data = json.loads(body)
+  for d in data:
+    if d['pk'] == 0:
+      selected_college = d['scol']
+      since = d['t']
+      #logger.info("selected college found " + selected_college)
+    else:
+      try:
+        s = Candidate.objects.get(pk=d['pk'])
+        #logger.info("call amend on pk = {}".format(d['pk']))
+        es = amend_student_state(s, d, user, selected_college)
+        if es:
+          msg.append(es)
+      except ObjectDoesNotExist:
+        logger.error("Illegal Student pk = " + d['pk'])
+  return msg, since
+
+def get_student_states(since, user, college_code=None):
+  kw = {}
+  if since:
+    base = datetime.datetime.utcfromtimestamp(int(since))
+    kw['modification_timestamp__gt'] = base
+  if OverallState.objects.current() in [ OverallState.LONGLIST, OverallState.SHORTLIST ]:
+    kw['state'] = Candidate.STATE_SUMMONED
+  #logger.info("kw = {}".format(kw))
+
+  if college_code:
+    c1 = Candidate.objects.filter(college1__adss_code=college_code.upper(), **kw).prefetch_related('comments', 'offer')
+    c2 = Candidate.objects.filter(college2__adss_code=college_code.upper(), **kw).prefetch_related('comments', 'offer')
+    candidates = c1 | c2
+  else:
+    if len(kw) == 0:
+      candidates = Candidate.objects.prefetch_related('comments', 'offer')
+    else:
+      candidates = Candidate.objects.filter(**kw).prefetch_related('comments', 'offer')
+    #logger.info("Number candidates = {}".format(candidates.count()))
+
+  #logger.info("Extract state on {} candidates".format(candidates.count()))
+  res = []
+  for s in candidates:
+    res.append(extract_student_state(s, user))
+  #logger.info("res = {}".format(res))
+  return res
+
 @login_required
 def api_student_states(request, college_code=None):
     # whether POST or GET, response is to update the state information
     #since = request.REQUEST.get('t') # deprecated in favor of request.GET/POST
     #logger.info("api_student_states:  year {}, id {}, since {}".format(year, student_id, since))
-    logger.info("api_student_states method={}".format(request.method))
-    res = []
-    msg = [] # messages to return to user
+    #logger.info("api_student_states method={0}, {1}".format(request.method, request.body))
+    #logger.info("request = {}".format(request))
     if request.method == "POST":
-        since = request.POST.get('t')
-        selected_college = ""
-        data = json.loads(request.body)
-        for d in data:
-            if d['pk'] == 0:
-                selected_college = d['scol']
-                logger.info("selected college found " + selected_college)
-            else:
-                try:
-                    s = Candidate.objects.get(pk=d['pk'])
-                    logger.info("call amend on pk = {}".format(d['pk']))
-                    es = amend_student_state(s, d, request.user, selected_college)
-                    if es:
-                        msg.append(es)
-                except ObjectDoesNotExist:
-                    logger.error("Illegal Student pk = " + d['pk'])
+        #logger.info("post dict = {}".format(request.POST))
+        #since = request.POST.get('t')
+        msg, since = post_student_states(request.body.decode('utf-8'), request.user)
     else:
         since = request.GET.get('t')
+        msg = [] # messages to return to user (none from GET)
 
-    logger.info("Now handle get response t={}".format(since))
+    #logger.info("Now handle get response t={}".format(since))
     # now handle GET or POST response
-    kw = {}
-    if since:
-        base = datetime.datetime.utcfromtimestamp(int(since))
-        kw['modification_timestamp__gt'] = base
-    if OverallState.objects.current() in [ OverallState.LONGLIST, OverallState.SHORTLIST ]:
-        kw['state'] = Candidate.STATE_SUMMONED
-    logger.info("kw = {}".format(kw))
-
-    if college_code:
-        c1 = Candidate.objects.filter(college1__adss_code=college_code.upper(), **kw).select_related('comments').select_related('offer')
-        c2 = Candidate.objects.filter(college2__adss_code=college_code.upper(), **kw).select_related('comments').select_related('offer')
-        candidates = c1 | c2
-    else:
-        if len(kw) == 0:
-            candidates = Candidate.objects.select_related('comments').select_related('offer')
-        else:
-            candidates = Candidate.objects.filter(**kw).select_related('comments').select_related('offer')
-        #logger.info("Number candidates = {}".format(candidates.count()))
-
-    logger.info("Extract state on {} candidates".format(candidates.count()))
-    for s in candidates:
-        logger.info("extract one")
-        res.append(extract_student_state(s, request.user))
+    res = get_student_states(since, request.user, college_code)
     if len(msg) > 0:
-        res.append({ "pk":0, "msg": msg })
+       res.append({ "pk":0, "msg": msg })
 
     #response = HttpResponse(json.dumps(res), content_type='application/json')
-    logger.info("res = {}".format(res))
     response = JsonResponse({'data':res})
     return response
 
