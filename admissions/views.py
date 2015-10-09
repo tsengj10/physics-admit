@@ -184,7 +184,7 @@ def edit_college(request, college_code, return_to='admissions:colleges'):
 #---------------------------------------------------------------
 
 def api_get_colleges(request):
-    logger.info("api_get_colleges")
+    #logger.info("api_get_colleges")
     #serializers.serialize('json', colleges, stream=response)
     res = []
     for c in College.objects.all():
@@ -201,7 +201,7 @@ def api_get_colleges(request):
 #---------------------------------------------------------------
 
 def extract_student_state(candidate, user):
-    #logger.info("extract_student_state")
+    logger.info("extract_student_state")
     overallstate = OverallState.objects.current()
     #logger.info("  overall state = {}".format(overallstate))
     data = {}
@@ -523,17 +523,19 @@ def amend_student_state(candidate, data, user, selected_college):
 @login_required
 def api_student_states(request, college_code=None):
     # whether POST or GET, response is to update the state information
-    since = request.REQUEST.get('t')
+    #since = request.REQUEST.get('t') # deprecated in favor of request.GET/POST
     #logger.info("api_student_states:  year {}, id {}, since {}".format(year, student_id, since))
+    logger.info("api_student_states method={}".format(request.method))
     res = []
     msg = [] # messages to return to user
     if request.method == "POST":
+        since = request.POST.get('t')
         selected_college = ""
         data = json.loads(request.body)
         for d in data:
             if d['pk'] == 0:
                 selected_college = d['scol']
-                #logger.info("selected college found " + selected_college)
+                logger.info("selected college found " + selected_college)
             else:
                 try:
                     s = Candidate.objects.get(pk=d['pk'])
@@ -543,17 +545,18 @@ def api_student_states(request, college_code=None):
                         msg.append(es)
                 except ObjectDoesNotExist:
                     logger.error("Illegal Student pk = " + d['pk'])
+    else:
+        since = request.GET.get('t')
 
-    #logger.info("Now handle get response")
+    logger.info("Now handle get response t={}".format(since))
     # now handle GET or POST response
     kw = {}
-    if year:
-        kw['info__interview_year'] = year
     if since:
         base = datetime.datetime.utcfromtimestamp(int(since))
         kw['modification_timestamp__gt'] = base
     if OverallState.objects.current() in [ OverallState.LONGLIST, OverallState.SHORTLIST ]:
         kw['state'] = Candidate.STATE_SUMMONED
+    logger.info("kw = {}".format(kw))
 
     if college_code:
         c1 = Candidate.objects.filter(college1__adss_code=college_code.upper(), **kw).select_related('comments').select_related('offer')
@@ -564,14 +567,17 @@ def api_student_states(request, college_code=None):
             candidates = Candidate.objects.select_related('comments').select_related('offer')
         else:
             candidates = Candidate.objects.filter(**kw).select_related('comments').select_related('offer')
+        #logger.info("Number candidates = {}".format(candidates.count()))
 
-    #logger.info("Extract state on {} candidates".format(candidates.count()))
+    logger.info("Extract state on {} candidates".format(candidates.count()))
     for s in candidates:
+        logger.info("extract one")
         res.append(extract_student_state(s, request.user))
     if len(msg) > 0:
         res.append({ "pk":0, "msg": msg })
 
-    #logger.info("Send back response")
-    response = HttpResponse(json.dumps(res), content_type='application/json')
+    #response = HttpResponse(json.dumps(res), content_type='application/json')
+    logger.info("res = {}".format(res))
+    response = JsonResponse({'data':res})
     return response
 

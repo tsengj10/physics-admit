@@ -260,10 +260,10 @@ function offerable(rank) {
 
 {% if college.adss_code == 'ALL' %}
   {% url 'admissions:active_applicants' as the_url %}
-  {% url 'admissions:api_student_states' as states_url %}
+  {% url 'admissions:api_all_student_states' as states_url %}
 {% elif college.adss_code == 'APP' %}
   {% url 'admissions:all_applicants' as the_url %}
-  {% url 'admissions:api_student_states' as states_url %}
+  {% url 'admissions:api_all_student_states' as states_url %}
 {% else %}
   {% url 'admissions:college_applicants' college.adss_code|lower as the_url %}
   {% url 'admissions:api_student_states' college_code=college.adss_code|lower as states_url %}
@@ -868,7 +868,7 @@ $(document).ready(function() {
     changes.forEach(function(d,j) {
       tosave.push({ "pk": j, "id": d.id, "f": d.f });
     });
-    //console.log("reduced json dump = " + JSON.stringify(tosave));
+    console.log("reduced json dump = " + JSON.stringify(tosave));
 
     $.post("{{ states_url }}?t="+basetimestamp, JSON.stringify(tosave), fillstate, "json");
 
@@ -906,7 +906,7 @@ $(document).ready(function() {
   }
 
   function fillstate(data) {
-    //console.log("data received:  " + JSON.stringify(data));
+    console.log("data received:  " + JSON.stringify(data));
     // need to add to table data and redraw
     var smod = { "order":"original", "search":"none", "page":"all" };
     //var cs = table.columns(".stateinfo", smod);
@@ -926,7 +926,7 @@ $(document).ready(function() {
     //var ii5 = table.column("i5:name").index();
     //var inc = table.column("nc:name").index();
 
-    data.forEach(function(d,j) {
+    data.data.forEach(function(d,j) {
       if (d.pk == 0) {
         // messages back from server
         msg = [ "From server:<ul>" ];

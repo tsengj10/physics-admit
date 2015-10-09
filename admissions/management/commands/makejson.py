@@ -191,9 +191,9 @@ class Command(BaseCommand):
 
   def order_qual_summary(self, qual):
     s = []
-    self.stdout.write("Qual summary {}".format(qual))
+    #self.stdout.write("Qual summary {}".format(qual))
     examkeys = list(qual.keys())
-    self.stdout.write("Keys {}".format(examkeys))
+    #self.stdout.write("Keys {}".format(examkeys))
     examkeys.sort()
     for k in examkeys:
       st = []
@@ -379,7 +379,7 @@ class Command(BaseCommand):
         j['scht'] = sch.school_type.physics_type
         usepost = True
       schd.append(sdet)
-    self.stdout.write("School list for {}:  {}".format(name, schd))
+    #self.stdout.write("School list for {}:  {}".format(name, schd))
 
     # sort first by start date, and then school id (school details not reliably well formed)
     # (this depends on python sort order being stable, which is true after python 2.2)
