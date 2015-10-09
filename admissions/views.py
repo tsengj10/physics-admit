@@ -201,7 +201,7 @@ def api_get_colleges(request):
 #---------------------------------------------------------------
 
 def extract_student_state(candidate, user):
-    logger.info("extract_student_state")
+    #logger.info("extract_student_state")
     overallstate = OverallState.objects.current()
     #logger.info("  overall state = {}".format(overallstate))
     data = {}

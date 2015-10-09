@@ -436,11 +436,6 @@ function renderChangeState(data, type, row, meta) {
   }
   //console.log("  unused row=" + meta.row + " pk=" + row["pk"] + " value=" + data);
   //console.log("  typeof data = " + (typeof data));
-  //if (meta.row == 17) {
-  //  for (e in data) {
-      //console.log("    data[" + e + "] = " + data[e]);
-  //  }
-  //}
   return data == undefined ? "" : data;
 }
 
@@ -693,8 +688,6 @@ $(document).ready(function() {
 
     // get state information
     $.getJSON("{{ states_url }}?t="+basetimestamp, fillstate);
-    //$.getJSON("/admissions/api/states/?t="+basetimestamp, fillstate);
-    //$.getJSON("/static/json/test-state.json", fillstate);
   } );
 
   // Add event listener for opening and closing details
@@ -793,7 +786,6 @@ $(document).ready(function() {
     table.$('.inblanks').each(function(i,e) {
       //console.log("save:  name=" + e.name + " value=" + e.value);
       if (e.value.length > 0) {
-        //changes.push({ "n": e.name, "v": e.value });
         var fields = e.name.split('-');
         var rowdata = table.row(parseInt(fields[1])).data();
         var pk = rowdata["pk"];
@@ -894,24 +886,6 @@ $(document).ready(function() {
   function fillstate(data) {
     //console.log("data received:  " + JSON.stringify(data));
     // need to add to table data and redraw
-    var smod = { "order":"original", "search":"none", "page":"all" };
-    //var cs = table.columns(".stateinfo", smod);
-    //var csd = cs.data();
-    // csd[0] is status, csd[1] is i1, etc.
-
-    //console.log("cs indexes length = " + cs.indexes().length);
-    //var tc = table.column("status:name").index();
-    //console.log("tc index length = " + tc.length + " value = " + tc);
-    //for (e in tc) console.log("  tc[" + e + "] = " + tc[e]);
-
-    //var istat = table.column("status:name").index();
-    //var ii1 = table.column("i1:name").index();
-    //var ii2 = table.column("i2:name").index();
-    //var ii3 = table.column("i3:name").index();
-    //var ii4 = table.column("i4:name").index();
-    //var ii5 = table.column("i5:name").index();
-    //var inc = table.column("nc:name").index();
-
     data.data.forEach(function(d,j) {
       if (d.pk == 0) {
         // messages back from server
@@ -941,31 +915,11 @@ $(document).ready(function() {
         if (k == "state") k = "status";
         if (k != "comments" && !(k in rsd)) return true; // not in row data rsd
         if (rsd[k] != v) {
-          //if (k == "comments") {
-          //  table.cell(jr, inc, smod).data(v.length); // now incorrect; assumes all comments in state
-          //}
           rsd[k] = v;
           changed = true;
         }
       });
       if (changed) table.row(jr).data(rsd);
-
-      //var ds = d.state ? d.state : "";
-      //if (rsd["status"] != ds) rsd["status"] = d.state;
-      //rsd["i1"] = d.i1 ? d.i1 : "";
-      //rsd["i2"] = d.i2 ? d.i2 : "";
-      //rsd["i3"] = d.i3 ? d.i3 : "";
-      //rsd["i4"] = d.i4 ? d.i4 : "";
-      //rsd["i5"] = d.i5 ? d.i5 : "";
-      //rsd["i6"] = d.i6 ? d.i6 : "";
-      //if ("comments" in d) {
-      //  var dc = d.comments;
-      //  table.cell(jr, inc, smod).data(dc.length);
-      //  rsd["comments"] = dc;
-      //} else {
-      //  table.cell(jr, inc, smod).data(0);
-      //}
-      //table.row(jr).data(rsd);
     });
 
     table.draw();
@@ -996,9 +950,7 @@ $(document).ready(function() {
     }
     var used = false;
     if ($('#scol0').prop('checked')) {
-      //offermatch = new RegExp('^[34P]\[' + choice + '\]$');
       used = true;
-      //if (offermatch.test(aData[choicecols[0]])) return true;
       if (aData[choicecols[0]].indexOf(choice) >= 0) return true;
     }
     if ($('#scolf').prop('checked')) {
