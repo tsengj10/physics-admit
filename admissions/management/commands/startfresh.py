@@ -14,6 +14,7 @@ class Command(BaseCommand):
     load_school_types()
     load_qual_types()
     create_college_groups()
+    # remember to create a Weights object!
     # may want to load a user table as well
     ovs = OverallState(state=OverallState.DEVELOPMENT)
     ovs.save()

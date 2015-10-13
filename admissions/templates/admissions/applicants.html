@@ -220,11 +220,21 @@ p#messages {
 </tfoot>
 </table>
 
-<p>
-<button type='button' id='savebutton' class='statebutton' disabled=true>Save state</button>
-<button type='button' id='reloadbutton' class='reloadbutton'>Reload state</button>
-<button type='button' id='resetbutton' class='resetbutton'>Reset blanks</button>
-</p>
+<table cellspacing="0" cellpadding="3" border="0">
+<tr>
+<td>
+  <button type='button' id='savebutton' class='statebutton' disabled=true>Save state</button>
+  <button type='button' id='reloadbutton' class='reloadbutton'>Reload state</button>
+  <button type='button' id='resetbutton' class='resetbutton'>Reset blanks</button>
+</td>
+<td>
+  Weights:  PAT m <input type="number" name="wpm" style="width:5em" default="{{ weights.pat_maths }}">
+  PAT ph <input type="number" name="wpp" style="width:5em" default="{{ weights.pat_physics }}">
+  i1+i2 <input type="number" name="wi1" style="width:5em" default="{{ weights.interview1 }}">
+  i3 <input type="number" name="wi2" style="width:5em" default="{{ weights.interview2 }}">
+</td>
+</tr>
+</table>
 
 <p id="messages">
 </p>
@@ -498,28 +508,29 @@ function renderChangeOffer(data, type, row, meta) {
   return data;
 }
 
-function renderJelleyScore(data, type, row, meta) {
+//function renderJelleyScore(data, type, row, meta) {
   //console.log("row[pp] = " + row["pp"]);
   //console.log("row[i1] = " + row["i1"]);
   //console.log("row[i2] = " + row["i2"]);
   //console.log("row[i3] = " + row["i3"]);
-  var WPATM = 1.0;
-  var WPATP = 1.0;
-  var WINT1 = 3.0;
-  var WINT2 = 4.0;
-  var pm = 0.0;
-  var pp = 0.0;
-  var i1 = 0.0;
-  var i2 = 0.0;
-  var i3 = 0.0;
-  if ("pm" in row && row["pm"].length > 0) pm = parseFloat(row["pm"]);
-  if ("pp" in row && row["pp"].length > 0) pp = parseFloat(row["pp"]);
-  if ("i1" in row && row["i1"].length > 0) i1 = parseFloat(row["i1"]);
-  if ("i2" in row && row["i2"].length > 0) i2 = parseFloat(row["i2"]);
-  if ("i3" in row && row["i3"].length > 0) i3 = parseFloat(row["i3"]);
-  var js = WPATM*pm + WPATP*pp + WINT1*(i1 + i2) + WINT2*i3;
-  return js.toFixed(1).toString();
-}
+//  var WPATM = parseFloat($("input[name='wpm']").val());
+//  var WPATP = parseFloat($("input[name='wpp']").val());
+//  var WINT1 = parseFloat($("input[name='wi1']").val());
+//  var WINT2 = parseFloat($("input[name='wi2']").val());
+//  console.log("weights " + WPATM + " " + WPATP + " " + WINT1 + " " + WINT2);
+//  var pm = 0.0;
+//  var pp = 0.0;
+//  var i1 = 0.0;
+//  var i2 = 0.0;
+//  var i3 = 0.0;
+//  if ("pm" in row && row["pm"].length > 0) pm = parseFloat(row["pm"]);
+//  if ("pp" in row && row["pp"].length > 0) pp = parseFloat(row["pp"]);
+//  if ("i1" in row && row["i1"].length > 0) i1 = parseFloat(row["i1"]);
+//  if ("i2" in row && row["i2"].length > 0) i2 = parseFloat(row["i2"]);
+//  if ("i3" in row && row["i3"].length > 0) i3 = parseFloat(row["i3"]);
+//  var js = WPATM*pm + WPATP*pp + WINT1*(i1 + i2) + WINT2*i3;
+//  return js.toFixed(1).toString();
+//}
 
 function renderName(data, type, row, meta) {
   if (type == "display") {
@@ -606,14 +617,15 @@ $(document).ready(function() {
       { "data": "offer", "name": "offer", "defaultContent": '', "visible": false }, // spare
       { "data": "pm", "type": "num" },
       { "data": "pp", "type": "num" },
-      { "data": "pt", "type": "num", "visible": false },
+      { "data": "pt", "type": "num" },
       { "data": "i1", "name": "i1", "type": "num", "class": "stateinfo" },
       { "data": "i2", "name": "i2", "type": "num", "class": "stateinfo" },
       { "data": "i3", "name": "i3", "type": "num", "class": "stateinfo" },
       { "data": "i4", "name": "i4", "type": "num", "class": "stateinfo", "visible": false },
       { "data": "i5", "name": "i5", "type": "num", "class": "stateinfo", "visible": false },
       { "data": "cmts", "name": "nc", "type": "num", "defaultContent": '0', "class": "comments-detail", "render": renderCommentCount },
-      { "data": null, "type": "num", "render": renderJelleyScore }, // was js column
+      //{ "data": null, "type": "num", "render": renderJelleyScore }, // was js column
+      { "data": "js", "type": "num", "name": "js" }, // js column - now filled by refilljelley
       { "data": "rank", "type": "num" },
       { "data": "name", "render": renderName },
       { "data": "c1", "name": "col1" },
@@ -645,17 +657,13 @@ $(document).ready(function() {
       "groups": [
         { title: "Edit", columns: [ 1, 2, 3, 4, 5, 6, 8 ] },
         //{ title: "Offer", columns: [ 10 ] },
-        { title: "PAT", columns: [11, 12] },
-        { title: "PAT Total", columns: [13] },
-        { title: "Interviews", columns: [14, 15, 16, 19] },
+        { title: "PAT", columns: [11, 12, 13] },
+        { title: "Interviews", columns: [14, 15, 16, 19, 20, 21] },
         { title: "Interviews (Phil)", columns: [17, 18] },
-        { title: "Jelley Score", columns: [20, 21] },
         { title: "Colleges (2)", columns: [23, 24] },
         { title: "Colleges (other)", columns: [25, 26, 27, 28] },
         { title: "Course", columns: [ 29, 30] },
-        { title: "Misc", columns: [ 31, 32, 33, 34 ] },
-        { title: "Predicted", columns: [35] },
-        { title: "Obtained", columns: [36] },
+        { title: "Qualifications", columns: [ 31, 32, 33, 34, 35, 36 ] },
         { title: "Contextual", columns: [37, 38, 39, 40, 41, 42, 43, 44] },
         { title: "UCAS id", columns: [45] }
       ],
@@ -678,7 +686,7 @@ $(document).ready(function() {
       "sSwfPath": '{% static "js/DataTables-1.10.2/extensions/TableTools/swf/copy_csv_xls_pdf.swf" %}'
     }
   };
-  var table = $('#candidates').DataTable(spec);
+  table = $('#candidates').DataTable(spec);
 
   $('#candidates').on('xhr.dt', function(e, settings, json) {
 
@@ -863,6 +871,11 @@ $(document).ready(function() {
     clearblanks();
   });
 
+  $('input[name="wpm"]').change(refilljelley);
+  $('input[name="wpp"]').change(refilljelley);
+  $('input[name="wi1"]').change(refilljelley);
+  $('input[name="wi2"]').change(refilljelley);
+
   function clearblanks() {
     // clear inputs
     table.$('.inblanks').each(function(i,e) {
@@ -922,8 +935,37 @@ $(document).ready(function() {
       if (changed) table.row(jr).data(rsd);
     });
 
-    table.draw();
+    refilljelley();
+    //table.draw(); // already done by refilljelley
+  }
 
+  function refilljelley() {
+    var WPATM = parseFloat($("input[name='wpm']").val());
+    var WPATP = parseFloat($("input[name='wpp']").val());
+    var WINT1 = parseFloat($("input[name='wi1']").val());
+    var WINT2 = parseFloat($("input[name='wi2']").val());
+    //console.log("refilljelley:  weights " + WPATM + " " + WPATP + " " + WINT1 + " " + WINT2);
+    var ijs = table.column('js:name').index();
+    //console.log("index for js is " + ijs);
+    table.rows().eq(0).each(function(index) {
+      var d = table.row(index).data();
+      var pm = 0.0;
+      var pp = 0.0;
+      var i1 = 0.0;
+      var i2 = 0.0;
+      var i3 = 0.0;
+      if ("pm" in d && d["pm"].length > 0) pm = parseFloat(d["pm"]);
+      if ("pp" in d && d["pp"].length > 0) pp = parseFloat(d["pp"]);
+      if ("i1" in d && d["i1"].length > 0) i1 = parseFloat(d["i1"]);
+      if ("i2" in d && d["i2"].length > 0) i2 = parseFloat(d["i2"]);
+      if ("i3" in d && d["i3"].length > 0) i3 = parseFloat(d["i3"]);
+      var js = WPATM*pm + WPATP*pp + WINT1*(i1 + i2) + WINT2*i3;
+      d["js"] = js.toFixed(1).toString();
+      //console.log("pm = " + pm + " i1 = " + i1 + " jelley score = " + d["js"]);
+      table.row(index).data(d);
+    });
+    //console.log("refilljelley:  done with loop");
+    table.draw();
   }
 
   // :visIdx?

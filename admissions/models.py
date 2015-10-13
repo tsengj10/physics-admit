@@ -14,6 +14,16 @@ def next_matriculation_year():
 def present_interview_year():
     return next_matriculation_year() - 1
 
+#===========================================================================
+
+class Weights(models.Model):
+  pat_maths = models.FloatField(default=0)
+  pat_physics = models.FloatField(default=0)
+  interview1 = models.FloatField(default=0) # for i1 and i2
+  interview2 = models.FloatField(default=0) # for i1 and i2
+
+#===========================================================================
+
 class OverallStateManager(models.Manager):
   def current(self):
     """Get current overall state"""

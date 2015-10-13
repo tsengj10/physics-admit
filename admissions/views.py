@@ -11,6 +11,7 @@ import datetime
 
 # Used for logging events
 logger =  logging.getLogger(__name__)
+default_weights = Weights.objects.last()
 
 def get_colleges_for_user(u):
     colleges = College.objects.all()
@@ -123,7 +124,8 @@ def applicant(request, college_spec):
     'state_enter_interview_marks':(state in [OverallState.SHORTLIST,
                                              OverallState.DEVELOPMENT]),
     'state_enter_offers':(state in [OverallState.OFFERS,
-                                    OverallState.DEVELOPMENT])
+                                    OverallState.DEVELOPMENT]),
+    'weights':default_weights,
     }
   if state == OverallState.SHORTLIST:
     template_values['college_key_list'] = json.dumps(get_college_keys_for_user(request.user))
