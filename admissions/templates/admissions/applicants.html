@@ -228,10 +228,10 @@ p#messages {
   <button type='button' id='resetbutton' class='resetbutton'>Reset blanks</button>
 </td>
 <td>
-  Weights:  PAT m <input type="number" name="wpm" style="width:5em" default="{{ weights.pat_maths }}">
-  PAT ph <input type="number" name="wpp" style="width:5em" default="{{ weights.pat_physics }}">
-  i1+i2 <input type="number" name="wi1" style="width:5em" default="{{ weights.interview1 }}">
-  i3 <input type="number" name="wi2" style="width:5em" default="{{ weights.interview2 }}">
+  Weights:  PAT m <input type="number" name="wpm" style="width:5em">
+  PAT ph <input type="number" name="wpp" style="width:5em">
+  i1+i2 <input type="number" name="wi1" style="width:5em">
+  i3 <input type="number" name="wi2" style="width:5em">
 </td>
 </tr>
 </table>
@@ -940,10 +940,14 @@ $(document).ready(function() {
   }
 
   function refilljelley() {
-    var WPATM = parseFloat($("input[name='wpm']").val());
-    var WPATP = parseFloat($("input[name='wpp']").val());
-    var WINT1 = parseFloat($("input[name='wi1']").val());
-    var WINT2 = parseFloat($("input[name='wi2']").val());
+    var s = $("input[name='wpm']").val();
+    var WPATM = s.length > 0 ? parseFloat(s) : {{ weights.pat_maths }};
+    s = $("input[name='wpp']").val();
+    var WPATP = s.length > 0 ? parseFloat(s) : {{ weights.pat_physics }};
+    s = $("input[name='wi1']").val();
+    var WINT1 = s.length > 0 ? parseFloat(s) : {{ weights.interview1 }};
+    s = $("input[name='wi2']").val();
+    var WINT2 = s.length > 0 ? parseFloat(s) : {{ weights.interview2 }};
     //console.log("refilljelley:  weights " + WPATM + " " + WPATP + " " + WINT1 + " " + WINT2);
     var ijs = table.column('js:name').index();
     //console.log("index for js is " + ijs);
@@ -965,7 +969,7 @@ $(document).ready(function() {
       table.row(index).data(d);
     });
     //console.log("refilljelley:  done with loop");
-    table.draw();
+    table.draw(false);
   }
 
   // :visIdx?

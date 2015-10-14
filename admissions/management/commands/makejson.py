@@ -340,9 +340,9 @@ class Command(BaseCommand):
       elif status == Candidate.STATE_DESUMMONED:
         status = 'Desum'
       if candidate.rescued:
-        status = status + 'Rescue'
+        status = status + 'R'
       if candidate.reserved:
-        status = status + 'Keep' # S
+        status = status + 'K' # S (for keep)
     j['status'] = status
     apd = {
       'id': candidate.ucas_id,

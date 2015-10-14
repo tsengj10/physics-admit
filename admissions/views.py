@@ -226,7 +226,7 @@ def extract_student_state(candidate, user):
             if candidate.rescued:
                 cstate = cstate + 'R'
             if candidate.reserved:
-                cstate = cstate + 'S'
+                cstate = cstate + 'K' # keep; formerly S for saved
 
     data['state'] = cstate
     clist = get_college_codes_for_user(user)
