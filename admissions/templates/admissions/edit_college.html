@@ -19,4 +19,5 @@ Admissions database - edit college {{ college.name }} ({{ college.adss_code }})
     <input type="hidden" name="next" value="{{ return_to }}" />
     <input type="submit" value="Update" />
 </form>
+<p><a href="mailto:{{ tutormail }}">Admissions tutors:  {{ tutornames }}</a></p>
 {% endblock %}

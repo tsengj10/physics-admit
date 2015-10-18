@@ -433,7 +433,7 @@ function renderChangeState(data, type, row, meta) {
       td.push("<option value=''></option>");
 {% if state_longlist %}
       td.push("<option value='r'>Rescue</option><option value='t'>Unrescue</option>");
-      td.push("<option value='s'>Save</option><option value='u'>Unsave</option>");
+      td.push("<option value='s'>Keep</option><option value='u'>Unkeep</option>");
 {% endif %}
       if (row["course"] == 'P') td.push("<option value='q'>P&rarr;Q</option>")
       else if (row["course"] == 'Q') td.push("<option value='p'>Q&rarr;P</option>")
@@ -554,6 +554,7 @@ var pk2row = [];
 // remember that for unit results, we need to "unescape" HTML entities
 // using HTMLParser.HTMLParser().unescape(string)
 $(document).ready(function() {
+  var visstate = (globalstate == "O");
   var spec = {
     "dom": 'TC<"clear">lfrtip', // add an R to use colReorder
     "ajax": {
@@ -573,6 +574,10 @@ $(document).ready(function() {
           //console.log("Score data for " + d.c);
           //console.log("Crypt text (base64) is " + d.d);
           var key = CryptoJS.enc.Latin1.parse(collegekey[d.c]);
+          // make sure length of encoded string is divisible by 3 for Safari
+          var dl = d.d.length % 3;
+          if (dl == 1) d.d += '==';
+          else if (dl == 2) d.d += '=';
           var rawData = atob(d.d);
           var iv = rawData.substring(0,16);
           var crypttext = rawData.substring(16);
@@ -605,14 +610,14 @@ $(document).ready(function() {
         "data": null,
         "defaultContent": ''
       },
-      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeState },
+      { "data": null, "visible": visstate, "defaultContent": '', "render": renderChangeState },
       { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol1 },
       { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol1 },
       { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol2 },
       { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol1 },
       { "data": null, "visible": false, "defaultContent": '', "render": renderChangeIntCol2 },
       { "data": null, "visible": false, "defaultContent": '', "orderable": false, "visible": false }, // spare
-      { "data": null, "visible": false, "defaultContent": '', "render": renderChangeOffer },
+      { "data": null, "visible": visstate, "defaultContent": '', "render": renderChangeOffer },
       { "data": "status", "name": "status", "class": "stateinfo", "defaultContent": '' },
       { "data": "offer", "name": "offer", "defaultContent": '', "visible": false }, // spare
       { "data": "pm", "type": "num" },
@@ -655,7 +660,8 @@ $(document).ready(function() {
     "colVis": {
       "exclude": [ "all" ],
       "groups": [
-        { title: "Edit", columns: [ 1, 2, 3, 4, 5, 6, 8 ] },
+        { title: "Edit state", columns: [ 1, 8 ] },
+        { title: "Edit marks", columns: [ 2, 3, 4, 5, 6 ] },
         //{ title: "Offer", columns: [ 10 ] },
         { title: "PAT", columns: [11, 12, 13] },
         { title: "Interviews", columns: [14, 15, 16, 19, 20, 21] },

@@ -1,5 +1,7 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import User, Group
+from django.core.urlresolvers import reverse
 from django.http import JsonResponse
 from admissions.models import *
 from admissions.forms import *
@@ -12,6 +14,11 @@ import datetime
 # Used for logging events
 logger =  logging.getLogger(__name__)
 default_weights = Weights.objects.last()
+logger.info("default weights {0} {1} {2} {3}".format(
+            default_weights.pat_maths,
+            default_weights.pat_physics,
+            default_weights.interview1,
+            default_weights.interview2))
 
 def get_colleges_for_user(u):
     colleges = College.objects.all()
@@ -138,42 +145,55 @@ def applicant(request, college_spec):
 @login_required
 def view_or_edit_college(request, college_code, return_to=None):
   if not return_to:
-    return_to = request.REQUEST.get('next', reverse('admissions:colleges'))
+    return_to = request.GET.get('next', reverse('admissions:colleges'))
   c = College.objects.get(adss_code=college_code.upper())
-  if request.user.has_perm('admissions.change_college') and c in get_colleges_for_user(request.user):
+  if c in get_colleges_for_user(request.user):
     return edit_college(request, college_code, return_to)
   return view_college(request, college_code, return_to)
 
 @login_required
 def view_college(request, college_code, return_to='admissions:colleges'):
   college = College.objects.get(adss_code=college_code.upper())
+  tutors = User.objects.filter(groups__name__exact=college_code.upper())
+  tutornames = ', '.join([ t.last_name for t in tutors ])
+  tutormail = ','.join([ t.email for t in tutors ])
   template_values = {
       'return_to': return_to,
       'college': college,
+      'tutormail': tutormail,
+      'tutornames': tutornames,
       }
   return render(request, 'admissions/view_college.html', template_values)
 
-@permission_required('admissions.change_college')
+#@permission_required('admissions.change_college')
+@login_required
 def edit_college(request, college_code, return_to='admissions:colleges'):
-  college = College.objects.get(adss_code=college_code.upper())
+  #college = College.objects.get(adss_code=college_code.upper())
+  college = get_object_or_404(College, adss_code=college_code.upper())
   if request.method == 'POST':
     if college not in get_colleges_for_user(request.user):
-      return redirect('admissions:edit_teams', **kwargs)
+      return redirect('admissions:colleges') # not authorized
     college_form = CollegeForm(request.POST, instance=college)
     if college_form.is_valid():
       college_form.save()
     kwargs = {
         'college_code': college_code,
-        'return_to': return_to,
+        #'return_to': return_to,
         }
     all_valid = college_form.is_valid()
     if all_valid:
-      return redirect('admissions:edit_college', **kwargs)
+      #return redirect('admissions:edit_college', **kwargs)
+      return redirect('admissions:colleges')
   else:
     college_form = CollegeForm(instance=college)
+  tutors = User.objects.filter(groups__name__exact=college_code.upper())
+  tutornames = ', '.join([ t.last_name for t in tutors ])
+  tutormail = ','.join([ t.email for t in tutors ])
   template_values = {
       'return_to': return_to,
       'college': college,
+      'tutormail': tutormail,
+      'tutornames': tutornames,
       'college_form': college_form,
       }
   return render(request, 'admissions/edit_college.html', template_values)
@@ -402,10 +422,10 @@ def amend_student_state(candidate, data, user, selected_college):
                 elif ev == 'T' and longlist: # unrescue
                     candidate.rescued = False
                     continue
-                elif ev == 'S' and longlist: # save
+                elif ev == 'S' and longlist: # save (keep)
                     candidate.reserved = True
                     continue
-                elif ev == 'U' and longlist: # unsaved
+                elif ev == 'U' and longlist: # unsaved (unkeep)
                     candidate.reserved = False
                     continue
                 elif ev == 'W': # withdraw
@@ -464,14 +484,14 @@ def amend_student_state(candidate, data, user, selected_college):
                     else:
                         sc = College.objects.get(adss_code=selected_college)
                 if ev == 'Q': # physics
-                    logger.info("Physics-only offer")
+                    #logger.info("Physics-only offer")
                     if candidate.course_type == Candidate.COURSE_THREEYEAR:
                         ct = Candidate.COURSE_THREEYEAR
                     else:
                         ct = Candidate.COURSE_FOURYEAR
                     flag = False
                 elif ev == 'P':
-                    logger.info("PhysPhil offer")
+                    #logger.info("PhysPhil offer")
                     # don't give P offer to physics-only candidate!
                     ct = candidate.course_type
                     if ct == Candidate.COURSE_PHYSPHIL_WITH_FALLBACK:
@@ -482,7 +502,7 @@ def amend_student_state(candidate, data, user, selected_college):
                     flag = True
                 elif ev == '0':
                     # revoke offer
-                    logger.info("Revoke offer")
+                    #logger.info("Revoke offer")
                     Offer.objects.filter(candidate=candidate).filter(college=sc).all().delete()
                     continue
                 else:
