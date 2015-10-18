@@ -146,15 +146,14 @@ def applicant(request, college_spec):
 def view_or_edit_college(request, college_code, return_to=None):
   if not return_to:
     return_to = request.GET.get('next', reverse('admissions:colleges'))
-  c = College.objects.get(adss_code=college_code.upper())
+  c = get_object_or_404(College, adss_code=college_code.upper())
   if c in get_colleges_for_user(request.user):
-    return edit_college(request, college_code, return_to)
-  return view_college(request, college_code, return_to)
+    return edit_college(request, c, return_to)
+  return view_college(request, c, return_to)
 
-@login_required
-def view_college(request, college_code, return_to='admissions:colleges'):
-  college = College.objects.get(adss_code=college_code.upper())
-  tutors = User.objects.filter(groups__name__exact=college_code.upper())
+def view_college(request, college, return_to='admissions:colleges'):
+  teams = college.interview_team.all()
+  tutors = User.objects.filter(groups__name__exact=college.adss_code)
   tutornames = ', '.join([ t.last_name for t in tutors ])
   tutormail = ','.join([ t.email for t in tutors ])
   template_values = {
@@ -162,31 +161,34 @@ def view_college(request, college_code, return_to='admissions:colleges'):
       'college': college,
       'tutormail': tutormail,
       'tutornames': tutornames,
+      'teams': teams,
       }
   return render(request, 'admissions/view_college.html', template_values)
+  #return render_to_response('admissions/view_college.html', template_values)
 
-#@permission_required('admissions.change_college')
-@login_required
-def edit_college(request, college_code, return_to='admissions:colleges'):
-  #college = College.objects.get(adss_code=college_code.upper())
-  college = get_object_or_404(College, adss_code=college_code.upper())
+def edit_college(request, college, return_to='admissions:colleges'):
   if request.method == 'POST':
     if college not in get_colleges_for_user(request.user):
       return redirect('admissions:colleges') # not authorized
     college_form = CollegeForm(request.POST, instance=college)
     if college_form.is_valid():
       college_form.save()
+    team_formset = InterviewTeamFormset(request.POST, instance=college)
+    if team_formset.is_valid():
+      team_formset.save()
     kwargs = {
-        'college_code': college_code,
+        'college_code': college.adss_code,
         #'return_to': return_to,
         }
-    all_valid = college_form.is_valid()
+    all_valid = college_form.is_valid() and team_formset.is_valid()
     if all_valid:
       #return redirect('admissions:edit_college', **kwargs)
       return redirect('admissions:colleges')
   else:
     college_form = CollegeForm(instance=college)
-  tutors = User.objects.filter(groups__name__exact=college_code.upper())
+    team_formset = InterviewTeamFormset(instance=college)
+
+  tutors = User.objects.filter(groups__name__exact=college.adss_code)
   tutornames = ', '.join([ t.last_name for t in tutors ])
   tutormail = ','.join([ t.email for t in tutors ])
   template_values = {
@@ -195,6 +197,7 @@ def edit_college(request, college_code, return_to='admissions:colleges'):
       'tutormail': tutormail,
       'tutornames': tutornames,
       'college_form': college_form,
+      'teams': team_formset,
       }
   return render(request, 'admissions/edit_college.html', template_values)
 

@@ -54,7 +54,6 @@ do not include deferred offers.</p>
 {% for college in colleges %}
 <tr>
   <td><a href="{% url 'admissions:college_applicants' college_code=college.adss_code|lower %}">{{ college.name }}</a></td>
-  <!--<td><a href="{% url 'admissions:edit_teams' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>-->
   <!--<td><a href="{% url 'admissions:edit_schedule' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>-->
   <td class='cplaces'><a href="{% url 'admissions:edit_college' college_code=college.adss_code|lower %}">{{ college.total_places }}({{ college.physphil_places }})</a></td>
   <td id='offers-{{ college.adss_code }}'></td>

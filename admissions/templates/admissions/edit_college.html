@@ -5,9 +5,22 @@ Admissions database - edit college {{ college.name }} ({{ college.adss_code }})
 {% endblock %}
 {% block content %}
 <h2>College: {{ college.name }} ({{ college.adss_code }})</h2>
+<h3>Interview teams</h3>
+<p><a href="mailto:{{ tutormail }}">Admissions tutors:  {{ tutornames }}</a></p>
+<h3>Places and teams</h3>
+<p>Note that the total should be the number of places, including PhysPhil places,
+the College intends to offer for the next academic year.  It does not include
+offers for deferred entry, nor does it include supernumerary offers which the
+College in the end may make.</p>
+<p>To add a team, fill out blank form and hit &quot;Update&quot;.
+To add another team, return to this form from the college list page.
+To delete a team, check the &quot;Delete&quot; box and then &quot;Update&quot;.
+</p>
 <form method="POST">
     {% csrf_token %}
     {{ college_form.non_field_errors }}
+    <input type="hidden" name="next" value="{{ return_to }}" />
+    <input type="submit" value="Update" />
     <table border="0">
     {% for field in college_form %}
     <tr><td class="fieldWrapper" align="right" title="{{ field.help_text }}">{{ field.label_tag }}
@@ -16,8 +29,26 @@ Admissions database - edit college {{ college.name }} ({{ college.adss_code }})
         <td class="fieldWrapper" align="left">{{ field }}</td></tr>
     {% endfor %}
     </table>
+    <hr>
+  {% for form in teams %}
+    <p>
+    Admissions team
+    <table border='0'>
+    {% for hidden in form.hidden_fields %}
+    {{ hidden }}
+    {% endfor %}
+    {% for field in form.visible_fields %}
+    <tr><td class="fieldWrapper" align="right" title="{{ field.help_text }}">{{ field.label_tag }}
+            {{ field.errors }}
+        </td>
+        <td class="fieldWrapper" align="left">{{ field }}</td></tr>
+    {% endfor %}
+    </table>
+    </p>
+    <hr>
+  {% endfor %}
     <input type="hidden" name="next" value="{{ return_to }}" />
     <input type="submit" value="Update" />
+{{ teams.management_form }}
 </form>
-<p><a href="mailto:{{ tutormail }}">Admissions tutors:  {{ tutornames }}</a></p>
 {% endblock %}

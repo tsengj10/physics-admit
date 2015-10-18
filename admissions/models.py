@@ -740,3 +740,46 @@ class Offer(models.Model):
 
 #===========================================================================
 
+class InterviewTeam(models.Model):
+  """An interview team with a college and location"""
+  college = models.ForeignKey('College', null=True, related_name="interview_team")
+  names = models.CharField(max_length=255, help_text="Names on interview team")
+  location = models.CharField(max_length=255, help_text="Normal location")
+  notes = models.TextField(help_text="General instructions to all interviewees")
+
+  def __str__(self):
+    return "{0} ({1})".format(self.names, self.college.name)
+
+#===========================================================================
+
+class InterviewSlot(models.Model):
+  """Interview schedule slot.  This is distinct from interview data, as we don't
+     specify to colleges how they come up with interview data."""
+  PHYSICS = 'physics'
+  PHILOSOPHY = 'philosophy'
+  SUBJECTS = (
+      (PHYSICS, 'Physics (including mathematics)'),
+      (PHILOSOPHY, 'Philosophy'),
+      )
+  LOCAL = 'local'
+  REMOTE = 'remote'
+  MODES = (
+      (LOCAL, 'Local, face-to-face in Oxford'),
+      (REMOTE, 'Remote, usually via Skype'),
+      )
+  candidate = models.ForeignKey('Candidate', related_name="interview_slot")
+  team = models.ForeignKey('InterviewTeam', related_name="interview_slot")
+  subject = models.CharField(
+      max_length=32,
+      default=PHYSICS,
+      choices=SUBJECTS)
+  mode = models.CharField(
+      max_length=8,
+      default=LOCAL,
+      choices=MODES)
+  time = models.DateTimeField()
+  length = models.IntegerField(help_text="Expected length of interview in minutes")
+
+  def __str__(self):
+    return '{0}: {1} at {2}'.format(self.student, self.college, self.time)
+
