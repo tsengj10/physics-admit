@@ -69,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'phyad.wsgi.application'
+WSGI_APPLICATION = 'phyad.wsgi.default.application'
 
 
 # Database

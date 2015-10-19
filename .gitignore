@@ -4,3 +4,6 @@ admissions/fixtures/**
 admissions/migrations/**
 admissions/static/**
 json/**
+.secrets/**
+static/**
+webauth/**
