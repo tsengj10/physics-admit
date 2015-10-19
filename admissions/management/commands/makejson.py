@@ -246,9 +246,9 @@ class Command(BaseCommand):
       # iv
       iv = Random.new().read(AES.block_size)
       # encrypt
-      cipher = AES.new(college_keys[c.adss_code], AES.MODE_CBC, IV=iv)
-      msg = binascii.b2a_base64(iv + cipher.encrypt(plain))
-      scoredata.append({ "c": c.adss_code, "d": msg })
+      cipher = AES.new(c.key, AES.MODE_CBC, IV=iv)
+      msg = bytes.decode(binascii.b2a_base64(iv + cipher.encrypt(plain)))
+      scoredata.append({ "c": c.adss_code, "d": msg.strip() })
     return scoredata
 
 # decrypt in javascript:

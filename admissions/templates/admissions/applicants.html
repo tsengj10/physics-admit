@@ -575,9 +575,9 @@ $(document).ready(function() {
           //console.log("Crypt text (base64) is " + d.d);
           var key = CryptoJS.enc.Latin1.parse(collegekey[d.c]);
           // make sure length of encoded string is divisible by 3 for Safari
-          var dl = d.d.length % 3;
-          if (dl == 1) d.d += '==';
-          else if (dl == 2) d.d += '=';
+          //var dl = d.d.length % 3;
+          //if (dl == 1) d.d += '==';
+          //else if (dl == 2) d.d += '=';
           var rawData = atob(d.d);
           var iv = rawData.substring(0,16);
           var crypttext = rawData.substring(16);

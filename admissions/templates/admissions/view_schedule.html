@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% load staticfiles %}
+{% block title %}
+Admissions database - {{ college.name }} schedule
+{% endblock %}
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/media/css/jquery.dataTables.min.css" %}'>
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColVis/css/dataTables.colVis.min.css" %}'>
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/TableTools/css/dataTables.tableTools.min.css" %}'>
+<script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/media/js/jquery.dataTables.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
+<script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
+{% endblock %}
+{% block content %}
+<h2>{{ college.name }}</h2>
+
+<table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
+<thead>
+  <tr>
+    <th></th>
+    {% for team in teams %}
+    <th colspan="4" valign="top">{{ team.names }}</th>
+    {% endfor %}
+    <th></th>
+  </tr>
+  <tr>
+    <th>Candidate</th>
+    {% for team in teams %}
+    <th>Subject</th>
+    <th>Mode</th>
+    <th>Start</th>
+    <th>End time</th>
+    {% endfor %}
+    <th>Other interviews</th>
+  </tr>
+</thead>
+<tfoot>
+  <tr>
+    <th>Candidate</th>
+    {% for team in teams %}
+    <th>Subject</th>
+    <th>Mode</th>
+    <th>Start</th>
+    <th>End time</th>
+    {% endfor %}
+    <th>Other interviews</th>
+  </tr>
+</tfoot>
+<tbody>
+</tbody>
+{% endblock %}
+{% block scripts %}
+{% endblock %}

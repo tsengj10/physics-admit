@@ -201,6 +201,59 @@ def edit_college(request, college, return_to='admissions:colleges'):
       }
   return render(request, 'admissions/edit_college.html', template_values)
 
+#---------------------------------------------------------------
+# interview schedule
+#---------------------------------------------------------------
+
+@login_required
+def view_or_edit_schedule(request, college_code, return_to=None):
+  if not return_to:
+    return_to = request.GET.get('next', reverse('admissions:colleges'))
+  c = get_object_or_404(College, adss_code=college_code.upper())
+  if c in get_colleges_for_user(request.user):
+    return edit_schedule(request, c, return_to)
+  return view_schedule(request, c, return_to)
+
+def view_schedule(request, college, return_to='admissions:colleges'):
+  teams = college.interview_team.all()
+  students1 = Candidate.objects.filter(college1=college)
+  students2 = Candidate.objects.filter(college2=college)
+  students = []
+  students.append(students1)
+  students.append(students2)
+  slots = InterviewSlot.objects.filter(candidate__in=students)
+
+  template_values = {
+      'return_to': return_to,
+      'college': college,
+      'teams': teams,
+      'students1': students1,
+      'students2': students2,
+      'slots': slots,
+      }
+  return render(request, 'admissions/view_schedule.html', template_values)
+
+def edit_schedule(request, college, return_to='admissions:colleges'):
+  if request.method == 'POST':
+    if college not in get_colleges_for_user(request.user):
+      return redirect('admissions:colleges') # not authorized
+    # parse request data
+    pass
+
+  else:
+    # schedule form
+    pass
+
+  teams = college.interview_team.all()
+  slots = InterviewSlot.objects.filter(team__in=teams)
+  template_values = {
+      'return_to': return_to,
+      'college': college,
+      'teams': teams,
+      'slots': slots,
+      }
+  return render(request, 'admissions/edit_schedule.html', template_values)
+
 #===============================================================
 # API
 #===============================================================
