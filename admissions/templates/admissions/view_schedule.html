@@ -16,14 +16,14 @@ Admissions database - {{ college.name }} schedule
 <script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
 {% endblock %}
 {% block content %}
-<h2>{{ college.name }}</h2>
+<h2>Interviews for {{ college.name }} ({{ college.adss_code }})</h2>
 
 <table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
 <thead>
   <tr>
     <th></th>
     {% for team in teams %}
-    <th colspan="4" valign="top">{{ team.names }}</th>
+    <th colspan="5" valign="top">{{ team.names }}</th>
     {% endfor %}
     <th></th>
   </tr>
@@ -32,6 +32,7 @@ Admissions database - {{ college.name }} schedule
     {% for team in teams %}
     <th>Subject</th>
     <th>Mode</th>
+    <th>Date</th>
     <th>Start</th>
     <th>End time</th>
     {% endfor %}
@@ -44,6 +45,7 @@ Admissions database - {{ college.name }} schedule
     {% for team in teams %}
     <th>Subject</th>
     <th>Mode</th>
+    <th>Date</th>
     <th>Start</th>
     <th>End time</th>
     {% endfor %}
@@ -54,4 +56,71 @@ Admissions database - {{ college.name }} schedule
 </tbody>
 {% endblock %}
 {% block scripts %}
+<script>
+var teams = [
+  {% for team in teams %}
+  {
+    "pk": "{{ team.pk }}",
+  },
+  {% endfor %}
+];
+var teamspk2i = {};
+$.each(teams, function(index, value) {
+  teamspk2i[value.pk] = index;
+});
+
+var students = {};
+{% for student in students %}
+students[{{ student.pk }}] = { "n": "{{ student.info.surname }}, {{ student.info.forenames }}", "s": [] };
+{% endfor %}
+
+{% for slot in slots %}
+students[{{ slot.candidate.pk }}]["s"].push({
+    "tpk": "{{ slot.team.pk }}",
+    "tcol": "{{ slot.team.college.adss_code }}",
+    "subject": "{{ slot.subject }}",
+    "mode": "{{ slot.mode }}",
+    "datetime": '{{ slot.time|date:U }}',
+    "length": "{{ slot.length }}",
+  });
+{% endfor %}
+
+var dataset = [];
+$.each(students, function(i, v) {
+  var fields = [];
+  fields.push(v.n);
+  $.each(v.s, function(j, u) {
+    
+  });
+});
+
+$(document).ready(function() {
+
+  var spec = {
+    data: dataset,
+    columns: [
+      { title: "name" },
+    ]
+  };
+
+  $('#slots').DataTable(spec);
+
+});
+
+
+
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+  return time;
+}
+
+</script>
 {% endblock %}
