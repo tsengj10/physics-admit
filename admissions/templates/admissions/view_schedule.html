@@ -18,12 +18,23 @@ Admissions database - {{ college.name }} schedule
 {% block content %}
 <h2>Interviews for {{ college.name }} ({{ college.adss_code }})</h2>
 
+{% if allow_edit %}
+<p>Click on team names to edit schedule.</p>
+{% endif %}
+
+<p>
 <table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
 <thead>
   <tr>
     <th></th>
     {% for team in teams %}
-    <th colspan="5" valign="top">{{ team.names }}</th>
+    <th colspan="5" valign="top" align="left">
+      {% if allow_edit %}
+      <a href="{% url 'admissions:edit_schedule' team_pk=team.pk %}">{{ team.names }}</a>
+      {% else %}
+      {{ team.names }}
+      {% endif %}
+    </th>
     {% endfor %}
     <th></th>
   </tr>
@@ -54,19 +65,18 @@ Admissions database - {{ college.name }} schedule
 </tfoot>
 <tbody>
 </tbody>
+</p>
 {% endblock %}
+
 {% block scripts %}
 <script>
-var teams = [
-  {% for team in teams %}
-  {
-    "pk": "{{ team.pk }}",
-  },
-  {% endfor %}
-];
+var teams = [];
+{% for team in teams %}
+teams.push({{ team.pk }});
+{% endfor %}
 var teamspk2i = {};
 $.each(teams, function(index, value) {
-  teamspk2i[value.pk] = index;
+  teamspk2i[value] = index;
 });
 
 var students = {};
@@ -76,21 +86,56 @@ students[{{ student.pk }}] = { "n": "{{ student.info.surname }}, {{ student.info
 
 {% for slot in slots %}
 students[{{ slot.candidate.pk }}]["s"].push({
-    "tpk": "{{ slot.team.pk }}",
+    "tpk": {{ slot.team.pk }},
     "tcol": "{{ slot.team.college.adss_code }}",
     "subject": "{{ slot.subject }}",
     "mode": "{{ slot.mode }}",
     "datetime": '{{ slot.time|date:U }}',
-    "length": "{{ slot.length }}",
+    "duration": "{{ slot.length }}",
   });
 {% endfor %}
 
+var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function formatDate(d) {
+  var da = d.getDate();
+  var s = da < 10 ? "0" : "";
+  s += da;
+  s += " " + months[d.getMonth()];
+  return s;
+}
+
+function formatTime(d) {
+  return d.toLocaleTimeString();
+  //var hour = a.getHours();
+  //var min = a.getMinutes();
+  //var sec = a.getSeconds();
+}
+
 var dataset = [];
-$.each(students, function(i, v) {
+$.each(students, function(pk, v) {
   var fields = [];
-  fields.push(v.n);
-  $.each(v.s, function(j, u) {
-    
+  var last = 1+5*teams.length; // last element of array of length 2+5*j
+  fields[last] = ""; // pre-initialize array
+  fields[0] = v.n;
+  var tpk = v.tpk;
+  $.each(v.s, function(i, u) {
+    for (var j = 0; j < teams.length; ++j) {
+      if (teams[j] == tpk) {
+        var a = new Date(u.datetime * 1000);
+        var b = new Date((u.datetime + u.duration*60) * 1000);
+        var jj = j * 5;
+        fields[++jj] = u.subject;
+        fields[++jj] = u.mode;
+        fields[++jj] = formatDate(a);
+        fields[++jj] = formatTime(a);
+        fields[++jj] = formatTime(b);
+      }
+    }
+    // not one of the college teams, so append to other interviews
+    if (fields[last].length > 0) fields[last] += ', ';
+    var a = new Date(u.datetime * 1000);
+    fields[last] += u.tcol + " " + formatDate(a) + " " + formatTime(a);
   });
 });
 
@@ -99,28 +144,20 @@ $(document).ready(function() {
   var spec = {
     data: dataset,
     columns: [
-      { title: "name" },
+      { name: "name" },
     ]
   };
-
+  for (var i = 0; i < teams.length; ++i) {
+    spec.columns.push({ name: "subject" + i });
+    spec.columns.push({ name: "mode" + i });
+    spec.columns.push({ name: "date" + i });
+    spec.columns.push({ name: "time" + i });
+    spec.columns.push({ name: "end" + i });
+  }
+  spec.columns.push({ name: "other" });
   $('#slots').DataTable(spec);
 
 });
-
-
-
-function timeConverter(UNIX_timestamp){
-  var a = new Date(UNIX_timestamp * 1000);
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var year = a.getFullYear();
-  var month = months[a.getMonth()];
-  var date = a.getDate();
-  var hour = a.getHours();
-  var min = a.getMinutes();
-  var sec = a.getSeconds();
-  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
-  return time;
-}
 
 </script>
 {% endblock %}

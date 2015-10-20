@@ -252,22 +252,20 @@ def edit_teams(request, college, return_to='admissions:colleges'):
 #---------------------------------------------------------------
 
 @login_required
-def view_or_edit_schedule(request, college_code, return_to=None):
-  if not return_to:
-    return_to = request.GET.get('next', reverse('admissions:colleges'))
-  c = get_object_or_404(College, adss_code=college_code.upper())
-  if c in get_colleges_for_user(request.user):
-    return edit_schedule(request, c, return_to)
-  return view_schedule(request, c, return_to)
-
-def view_schedule(request, college, return_to='admissions:colleges'):
+def view_schedule(request, college_code, return_to='admissions:colleges'):
+  college = get_object_or_404(College, adss_code=college_code.upper())
+  allow_edit = college in get_colleges_for_user(request.user)
   teams = college.interview_team.all()
   students1 = Candidate.objects.filter(college1=college)
   students2 = Candidate.objects.filter(college2=college)
-  students = []
-  students.append(students1)
-  students.append(students2)
-  slots = InterviewSlot.objects.filter(candidate__in=students)
+  #s1 = list(students1)
+  #s2 = list(students2)
+  #logger.info("s1 = {}".format(s1))
+  #logger.info("s2 = {}".format(s2))
+  students = list(students1) + list(students2)
+  #students = s1 + s2
+  #logger.info("{}".format(students))
+  slots = InterviewSlot.objects.filter(candidate__in=students) if len(students) > 0 else []
 
   template_values = {
       'return_to': return_to,
@@ -275,8 +273,19 @@ def view_schedule(request, college, return_to='admissions:colleges'):
       'teams': teams,
       'students': students,
       'slots': slots,
+      'allow_edit': allow_edit,
       }
   return render(request, 'admissions/view_schedule.html', template_values)
+
+@login_required
+def view_or_edit_schedule(request, team_pk, return_to=None):
+  if not return_to:
+    return_to = request.GET.get('next', reverse('admissions:colleges'))
+  t = get_object_or_404(InterviewTeam, pk=team_pk)
+  c = get_object_or_404(College, adss_code=t.college.adss_code)
+  if c in get_colleges_for_user(request.user):
+    return edit_schedule(request, t, return_to)
+  return view_schedule(request, c.adss_code, return_to)
 
 def edit_schedule(request, college, return_to='admissions:colleges'):
   if request.method == 'POST':

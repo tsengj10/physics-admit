@@ -18,6 +18,7 @@ urlpatterns = [
   url(r'^colleges/$', views.college_list, name='colleges'),
   url(r'^college/(?P<college_code>[a-z]{3})/$', views.view_or_edit_college, name="edit_college"),
   url(r'^teams/(?P<college_code>[a-z]{3})/$', views.view_or_edit_teams, name="edit_teams"),
-  url(r'^schedule/(?P<college_code>[a-z]{3})/$', views.view_or_edit_college, name="edit_schedule"),
+  url(r'^schedule/(?P<college_code>[a-z]{3})/$', views.view_schedule, name="view_schedule"),
+  url(r'^schedule/(?P<team_pk>[0-9]+)/$', views.view_or_edit_schedule, name="edit_schedule"),
   url(r'^notes/$', views.notes, name='notes'),
 ]
