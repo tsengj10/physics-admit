@@ -48,7 +48,7 @@ td .helptext{font-size:1em;}
 </p>
 {% if user.is_authenticated %}
 <hr />
-<p>You are logged in as {{ user }} <a href="{% url 'logout' %}">(Log out)</a></p>
+<p>You are logged in as {{ user }} <a href="{% url 'phyad_logout' %}">(Log out)</a></p>
 <!-- if using webauth, replace django.contrib.auth.views.logout with webauth.views.logout -->
 <hr />
 <p>This information is <b>CONFIDENTIAL</b>. Read the <a href="/consent/">Data Protection Statement</a> for further details.</p>
