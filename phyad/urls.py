@@ -20,11 +20,12 @@ from django.contrib import admin
 from django.shortcuts import redirect
 
 urlpatterns = [
-    url(r'^accounts/logout/', 'django.contrib.auth.views.logout', kwargs={'template_name':'registration/logout.html'}, name='logout'),
-    url(r'^accounts/', include('django.contrib.auth.urls')),
-    #url(r'^webauth/', include('webauth.urls')),
-    url(r'^admissions/', include('admissions.urls', namespace='admissions')),
+    #url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^admissions/', include('admissions.urls', namespace='admissions')),
+    url(r'^webauth/', include('webauth.urls')),
+    url(r'^accounts/login/', 'django.contrib.auth.views.login'),
+    url(r'^accounts/logout/', 'django.contrib.auth.views.logout', kwargs={'template_name':'registration/logout.html'}, name='phyad_logout'),
     url(r'^consent/', lambda req:redirect('admissions:index')),
     url(r'^$', lambda req:redirect('admissions:index')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

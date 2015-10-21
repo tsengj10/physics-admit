@@ -7,3 +7,5 @@ json/**
 .secrets/**
 static/**
 webauth/**
+**.pdf
+**.pyc
