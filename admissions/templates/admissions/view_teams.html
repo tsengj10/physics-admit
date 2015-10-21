@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions database - view interview teams for {{ college.name }} ({{ college.adss_code }})
+{% endblock %}
+{% block head %}
+<style>
+table { font-size: 16px; }
+</style>
+{% endblock %}
+{% block content %}
+<h2>Interview teams:  {{ college.name }} ({{ college.adss_code }})</h2>
+
+<p><a href="mailto:{{ tutormail }}">Admissions tutors:  {{ tutornames }}</a></p>
+
+{% for team in teams %}
+  <p>
+  <table border='0'>
+  <tr><td align="right">Names:</td><td align="left">{{ team.names }}</td</tr>
+  <tr><td align="right">Location:</td><td align="left">{{ team.location }}</td</tr>
+  <tr><td align="right">Notes:</td><td align="left">{{ team.notes }}</td</tr>
+  </table>
+  </p>
+  <hr>
+{% empty %}
+  <p>No interview teams defined.</p>
+{% endfor %}
+{% endblock %}

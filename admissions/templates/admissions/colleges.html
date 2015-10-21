@@ -44,20 +44,25 @@ do not include deferred offers.</p>
 <th>Places</th>
 <th>Offers made</th>
 <th>Flags</th>
+<th>Interviews</th>
 </tr>
 <tr><th></th>
 <!--<th>teams</th><th>(do not use yet)</th>-->
 <th>(incl PhysPhil)</th>
 <th>(incl PhysPhil)</th>
 <th>(incl PhysPhil)</th>
+<th></th>
 </tr>
 {% for college in colleges %}
 <tr>
   <td><a href="{% url 'admissions:college_applicants' college_code=college.adss_code|lower %}">{{ college.name }}</a></td>
-  <!--<td><a href="{% url 'admissions:edit_schedule' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>-->
   <td class='cplaces'><a href="{% url 'admissions:edit_college' college_code=college.adss_code|lower %}">{{ college.total_places }}({{ college.physphil_places }})</a></td>
   <td id='offers-{{ college.adss_code }}'></td>
   <td id='flags-{{ college.adss_code }}'></td>
+  <td>
+    <a href="{% url 'admissions:edit_teams' college_code=college.adss_code|lower %}">Teams</a>
+    <a href="{% url 'admissions:view_schedule' college_code=college.adss_code|lower %}">Schedule</a>
+  </td>
 </tr>
 {% endfor %}
 </table>

@@ -10,7 +10,6 @@ table { font-size: 16px; }
 {% endblock %}
 {% block content %}
 <h2>College: {{ college.name }} ({{ college.adss_code }})</h2>
-<h3>Places</h3>
 <p>Note that the total should be the number of places, including PhysPhil places,
 the College intends to offer for the next academic year.  It does not include
 offers for deferred entry, nor does it include supernumerary offers which the
@@ -19,18 +18,5 @@ College in the end may make.</p>
     <tr><td align="right">Total places:</td><td>{{ college.total_places }}</td></tr>
     <tr><td align="right">PhysPhil places:</td><td>{{ college.physphil_places }}</td></tr>
     </table>
-<h3>Admissions tutors</h3>
 <p><a href="mailto:{{ tutormail }}">Admissions tutors:  {{ tutornames }}</a></p>
-  {% for team in teams %}
-    <p>
-    <table border='0'>
-    <tr><td align="right">Names:</td><td align="left">{{ team.names }}</td</tr>
-    <tr><td align="right">Location:</td><td align="left">{{ team.location }}</td</tr>
-    <tr><td align="right">Notes:</td><td align="left">{{ team.notes }}</td</tr>
-    </table>
-    </p>
-    <hr>
-  {% empty %}
-    <p>No interview teams defined.</p>
-  {% endfor %}
 {% endblock %}

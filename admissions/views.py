@@ -152,7 +152,6 @@ def view_or_edit_college(request, college_code, return_to=None):
   return view_college(request, c, return_to)
 
 def view_college(request, college, return_to='admissions:colleges'):
-  teams = college.interview_team.all()
   tutors = User.objects.filter(groups__name__exact=college.adss_code)
   tutornames = ', '.join([ t.last_name for t in tutors ])
   tutormail = ','.join([ t.email for t in tutors ])
@@ -161,7 +160,6 @@ def view_college(request, college, return_to='admissions:colleges'):
       'college': college,
       'tutormail': tutormail,
       'tutornames': tutornames,
-      'teams': teams,
       }
   return render(request, 'admissions/view_college.html', template_values)
   #return render_to_response('admissions/view_college.html', template_values)
@@ -173,20 +171,16 @@ def edit_college(request, college, return_to='admissions:colleges'):
     college_form = CollegeForm(request.POST, instance=college)
     if college_form.is_valid():
       college_form.save()
-    team_formset = InterviewTeamFormset(request.POST, instance=college)
-    if team_formset.is_valid():
-      team_formset.save()
     kwargs = {
         'college_code': college.adss_code,
         #'return_to': return_to,
         }
-    all_valid = college_form.is_valid() and team_formset.is_valid()
+    all_valid = college_form.is_valid()
     if all_valid:
       #return redirect('admissions:edit_college', **kwargs)
       return redirect('admissions:colleges')
   else:
     college_form = CollegeForm(instance=college)
-    team_formset = InterviewTeamFormset(instance=college)
 
   tutors = User.objects.filter(groups__name__exact=college.adss_code)
   tutornames = ', '.join([ t.last_name for t in tutors ])
@@ -197,41 +191,101 @@ def edit_college(request, college, return_to='admissions:colleges'):
       'tutormail': tutormail,
       'tutornames': tutornames,
       'college_form': college_form,
-      'teams': team_formset,
       }
   return render(request, 'admissions/edit_college.html', template_values)
+
+#---------------------------------------------------------------
+# interview teams
+#---------------------------------------------------------------
+
+@login_required
+def view_or_edit_teams(request, college_code, return_to=None):
+  if not return_to:
+    return_to = request.GET.get('next', reverse('admissions:colleges'))
+  c = get_object_or_404(College, adss_code=college_code.upper())
+  if c in get_colleges_for_user(request.user):
+    return edit_teams(request, c, return_to)
+  return view_teams(request, c, return_to)
+
+def view_teams(request, college, return_to='admissions:colleges'):
+  teams = college.interview_team.all()
+  tutors = User.objects.filter(groups__name__exact=college.adss_code)
+  tutornames = ', '.join([ t.last_name for t in tutors ])
+  tutormail = ','.join([ t.email for t in tutors ])
+  template_values = {
+      'return_to': return_to,
+      'college': college,
+      'tutormail': tutormail,
+      'tutornames': tutornames,
+      'teams': teams,
+      }
+  return render(request, 'admissions/view_teams.html', template_values)
+
+def edit_teams(request, college, return_to='admissions:colleges'):
+  if request.method == 'POST':
+    if college not in get_colleges_for_user(request.user):
+      return redirect('admissions:colleges') # not authorized
+    team_formset = InterviewTeamFormset(request.POST, instance=college)
+    if team_formset.is_valid():
+      team_formset.save()
+    all_valid = team_formset.is_valid()
+    if all_valid:
+      kwargs = { 'college_code': college.adss_code.lower() }
+      return redirect('admissions:edit_teams', **kwargs)
+  else:
+    team_formset = InterviewTeamFormset(instance=college)
+
+  tutors = User.objects.filter(groups__name__exact=college.adss_code)
+  tutornames = ', '.join([ t.last_name for t in tutors ])
+  tutormail = ','.join([ t.email for t in tutors ])
+  template_values = {
+      'return_to': return_to,
+      'college': college,
+      'tutormail': tutormail,
+      'tutornames': tutornames,
+      'teams': team_formset,
+      }
+  return render(request, 'admissions/edit_teams.html', template_values)
 
 #---------------------------------------------------------------
 # interview schedule
 #---------------------------------------------------------------
 
 @login_required
-def view_or_edit_schedule(request, college_code, return_to=None):
-  if not return_to:
-    return_to = request.GET.get('next', reverse('admissions:colleges'))
-  c = get_object_or_404(College, adss_code=college_code.upper())
-  if c in get_colleges_for_user(request.user):
-    return edit_schedule(request, c, return_to)
-  return view_schedule(request, c, return_to)
-
-def view_schedule(request, college, return_to='admissions:colleges'):
+def view_schedule(request, college_code, return_to='admissions:colleges'):
+  college = get_object_or_404(College, adss_code=college_code.upper())
+  allow_edit = college in get_colleges_for_user(request.user)
   teams = college.interview_team.all()
   students1 = Candidate.objects.filter(college1=college)
   students2 = Candidate.objects.filter(college2=college)
-  students = []
-  students.append(students1)
-  students.append(students2)
-  slots = InterviewSlot.objects.filter(candidate__in=students)
+  #s1 = list(students1)
+  #s2 = list(students2)
+  #logger.info("s1 = {}".format(s1))
+  #logger.info("s2 = {}".format(s2))
+  students = list(students1) + list(students2)
+  #students = s1 + s2
+  #logger.info("{}".format(students))
+  slots = InterviewSlot.objects.filter(candidate__in=students) if len(students) > 0 else []
 
   template_values = {
       'return_to': return_to,
       'college': college,
       'teams': teams,
-      'students1': students1,
-      'students2': students2,
+      'students': students,
       'slots': slots,
+      'allow_edit': allow_edit,
       }
   return render(request, 'admissions/view_schedule.html', template_values)
+
+@login_required
+def view_or_edit_schedule(request, team_pk, return_to=None):
+  if not return_to:
+    return_to = request.GET.get('next', reverse('admissions:colleges'))
+  t = get_object_or_404(InterviewTeam, pk=team_pk)
+  c = get_object_or_404(College, adss_code=t.college.adss_code)
+  if c in get_colleges_for_user(request.user):
+    return edit_schedule(request, t, return_to)
+  return view_schedule(request, c.adss_code, return_to)
 
 def edit_schedule(request, college, return_to='admissions:colleges'):
   if request.method == 'POST':

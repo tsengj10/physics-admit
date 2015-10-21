@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions database - edit interview teams {{ college.name }} ({{ college.adss_code }})
+{% endblock %}
+{% block content %}
+<h2>Interview teams for {{ college.name }} ({{ college.adss_code }})</h2>
+
+<p>To add a team, fill out blank form and hit &quot;Update&quot;.
+To add another team, return to this form from the college list page.
+To delete a team, check the &quot;Delete&quot; box and then &quot;Update&quot;.
+</p>
+
+<form method="POST">
+{% csrf_token %}
+{% for form in teams %}
+  <p>
+  <table border='0'>
+  {% for hidden in form.hidden_fields %}
+  {{ hidden }}
+  {% endfor %}
+  {% for field in form.visible_fields %}
+  <tr><td class="fieldWrapper" align="right" title="{{ field.help_text }}">{{ field.label_tag }}
+          {{ field.errors }}
+      </td>
+      <td class="fieldWrapper" align="left">{{ field }}</td></tr>
+  {% endfor %}
+  </table>
+  </p>
+  <hr>
+{% endfor %}
+  <input type="hidden" name="next" value="{{ return_to }}" />
+  <input type="submit" value="Update" />
+{{ teams.management_form }}
+</form>
+{% endblock %}
