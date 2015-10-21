@@ -63,8 +63,7 @@ Admissions database - {{ college.name }} schedule
     <th>Other interviews</th>
   </tr>
 </tfoot>
-<tbody>
-</tbody>
+</table>
 </p>
 {% endblock %}
 
@@ -90,8 +89,8 @@ students[{{ slot.candidate.pk }}]["s"].push({
     "tcol": "{{ slot.team.college.adss_code }}",
     "subject": "{{ slot.subject }}",
     "mode": "{{ slot.mode }}",
-    "datetime": '{{ slot.time|date:U }}',
-    "duration": "{{ slot.length }}",
+    "datetime": {{ slot.time|date:"U" }},
+    "duration": {{ slot.length }},
   });
 {% endfor %}
 
@@ -116,20 +115,22 @@ var dataset = [];
 $.each(students, function(pk, v) {
   var fields = [];
   var last = 1+5*teams.length; // last element of array of length 2+5*j
-  fields[last] = ""; // pre-initialize array
+  for (var i = last; i > 0; --i) fields[i] = ""; // pre-initialize array
   fields[0] = v.n;
-  var tpk = v.tpk;
   $.each(v.s, function(i, u) {
+    var tpk = u.tpk;
     for (var j = 0; j < teams.length; ++j) {
       if (teams[j] == tpk) {
         var a = new Date(u.datetime * 1000);
         var b = new Date((u.datetime + u.duration*60) * 1000);
+        //console.log("start " + a + " end " + b);
         var jj = j * 5;
         fields[++jj] = u.subject;
         fields[++jj] = u.mode;
         fields[++jj] = formatDate(a);
         fields[++jj] = formatTime(a);
         fields[++jj] = formatTime(b);
+        return true;
       }
     }
     // not one of the college teams, so append to other interviews
@@ -137,7 +138,10 @@ $.each(students, function(pk, v) {
     var a = new Date(u.datetime * 1000);
     fields[last] += u.tcol + " " + formatDate(a) + " " + formatTime(a);
   });
+  dataset.push(fields);
 });
+
+//console.log(dataset);
 
 $(document).ready(function() {
 
@@ -155,6 +159,7 @@ $(document).ready(function() {
     spec.columns.push({ name: "end" + i });
   }
   spec.columns.push({ name: "other" });
+  //console.log(spec);
   $('#slots').DataTable(spec);
 
 });

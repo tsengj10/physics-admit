@@ -781,5 +781,5 @@ class InterviewSlot(models.Model):
   length = models.IntegerField(help_text="Expected length of interview in minutes")
 
   def __str__(self):
-    return '{0}: {1} at {2}'.format(self.student, self.college, self.time)
+    return '{0}: {1} at {2}'.format(self.candidate, self.team.college, self.time)
 

@@ -53,9 +53,9 @@ Admissions database - {{ team.college.name }} schedule editor
 <table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
 <thead>
   <tr>
-    <th colspan="3">Change</th>
-    <th colspan="3">Current schedule</th>
-    <th colspan="6">Candidate</th>
+    <th colspan="3" align="left">Change</th>
+    <th colspan="3" align="left">Current schedule</th>
+    <th colspan="6" align="left">Candidate</th>
   </tr>
   <tr>
     <th>Date</th>
@@ -88,8 +88,7 @@ Admissions database - {{ team.college.name }} schedule editor
     <th>Other interviews</th>
   </tr>
 </tfoot>
-<tbody>
-</tbody>
+</table>
 </p>
 {% endblock %}
 
@@ -118,15 +117,15 @@ students[{{ comment.candidate.pk }}]['comments'].push(
 students[{{ slot.candidate.pk }}]["s"] = {
     "subject": "{{ slot.subject }}",
     "mode": "{{ slot.mode }}",
-    "datetime": '{{ slot.time|date:U }}',
-    "duration": "{{ slot.length }}",
-  });
+    "datetime": {{ slot.time|date:"U" }},
+    "duration": {{ slot.length }},
+  };
   {% else %}
 students[{{ slot.candidate.pk }}]["other"].push({
     "tpk": {{ slot.team.pk }},
     "tcol": "{{ slot.team.college.adss_code }}",
     "mode": "{{ slot.mode }}",
-    "datetime": '{{ slot.time|date:U }}',
+    "datetime": {{ slot.time|date:"U" }},
   });
   {% endif %}
 {% endfor %}
@@ -147,30 +146,31 @@ function formatTime(d) {
 
 var dataset = [];
 $.each(students, function(pk, v) {
-  fields = [];
-  fields.push(""); // date selector
-  fields.push(""); // start time selector
-  fields.push(""); // duration selector
-  if (v['s'] == undefined) {
-    fields.push(""); // empty date
-    fields.push(""); // empty start time
-    fields.push(""); // empty end time
-  } else {
-    var a = new Date(v.datetime * 1000);
-    var b = new Date((v.datetime + v.duration*60) * 1000);
-    fields.push(formatDate(a));
-    fields.push(formatTime(a));
-    fields.push(formatTime(b));
+  var fields = [];
+  fields[0] = ""; // date selector
+  fields[1] = ""; // start time selector
+  fields[2] = ""; // duration selector
+  fields[3] = ""; // empty date
+  fields[4] = ""; // empty start time
+  fields[5] = ""; // empty end time
+  if (v['s'] != undefined) {
+    var a = new Date(v.s.datetime * 1000);
+    var b = new Date((v.s.datetime + v.s.duration*60) * 1000);
+    fields[3] = formatDate(a);
+    fields[4] = formatTime(a);
+    fields[5] = formatTime(b);
   }
-  fields.push(v.mode); // should be a selector
-  fields.push(v.subject); // should be a selector
-  fields.push(v.n);
-  fields.push(v.dcode); // disability code (use tooltip for notes)
-  fields.push(v.comments.length);
+  fields[6] = v.s.mode; // should be a selector
+  fields[7] = v.s.subject; // should be a selector
+  fields[8] = v.n;
+  fields[9] = v.dcode; // disability code (use tooltip for notes)
+  fields[10] = v.comments.length;
   // other interviews in v.other
-  fields.push(""); // other interviews
+  fields[11] = ""; // other interviews
+  //console.log(fields);
   dataset.push(fields);
 });
+//console.log(dataset);
 
 $(document).ready(function() {
 

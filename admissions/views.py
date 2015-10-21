@@ -301,8 +301,9 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
   students2 = Candidate.objects.filter(college2=college)
   students = list(students1) + list(students2)
   slots = InterviewSlot.objects.filter(candidate__in=students).prefetch_related(
-      'candidate', 'candidate.info', 'candidate.comments', 'team')
+      'candidate', 'team')
   comments = Comment.objects.filter(candidate__in=students)
+  infos = CandidateInfo.objects.filter(candidate__in=students)
   template_values = {
       'return_to': return_to,
       'team': team,
