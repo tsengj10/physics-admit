@@ -569,36 +569,40 @@ $(document).ready(function() {
       // check for encrypted interview marks
       var scoredatacrypts = json.data[0]["more"];
       if (typeof scoredatacrypts === 'undefined') return json.data;
-      scoredatacrypts.forEach(function(d,j) {
-        if (d.c in collegekey) {
-          //console.log("Score data for " + d.c);
-          //console.log("Crypt text (base64) is " + d.d);
-          var key = CryptoJS.enc.Latin1.parse(collegekey[d.c]);
-          // make sure length of encoded string is divisible by 3 for Safari
-          //var dl = d.d.length % 3;
-          //if (dl == 1) d.d += '==';
-          //else if (dl == 2) d.d += '=';
-          var rawData = atob(d.d);
-          var iv = rawData.substring(0,16);
-          var crypttext = rawData.substring(16);
-          var plaintextarray = CryptoJS.AES.decrypt(
-                               {ciphertext: CryptoJS.enc.Latin1.parse(crypttext)},
-                               key,
-                               {iv: CryptoJS.enc.Latin1.parse(iv)});
-          var plaintext = CryptoJS.enc.Latin1.stringify(plaintextarray);
-          //console.log(plaintext);
-          var plaindata = JSON.parse(plaintext);
-          plaindata.data.forEach(function(d) {
-            var jr = pk2row[d.pk];
-            if (typeof jr === 'undefined') return;
-            $.each(d, function(k,v) {
-              if (k == "pk" || k == "id") return true; // keep iterating
-              json.data[jr][k] = v;
+      try {
+        scoredatacrypts.forEach(function(d,j) {
+          if (d.c in collegekey) {
+            //console.log("Score data for " + d.c);
+            //console.log("Crypt text (base64) is " + d.d);
+            var key = CryptoJS.enc.Latin1.parse(collegekey[d.c]);
+            // make sure length of encoded string is divisible by 3 for Safari
+            //var dl = d.d.length % 3;
+            //if (dl == 1) d.d += '==';
+            //else if (dl == 2) d.d += '=';
+            var rawData = atob(d.d);
+            var iv = rawData.substring(0,16);
+            var crypttext = rawData.substring(16);
+            var plaintextarray = CryptoJS.AES.decrypt(
+                                 {ciphertext: CryptoJS.enc.Latin1.parse(crypttext)},
+                                 key,
+                                 {iv: CryptoJS.enc.Latin1.parse(iv)});
+            var plaintext = CryptoJS.enc.Latin1.stringify(plaintextarray);
+            //console.log(plaintext);
+            var plaindata = JSON.parse(plaintext);
+            plaindata.data.forEach(function(d) {
+              var jr = pk2row[d.pk];
+              if (typeof jr === 'undefined') return;
+              $.each(d, function(k,v) {
+                if (k == "pk" || k == "id") return true; // keep iterating
+                json.data[jr][k] = v;
               
+              });
             });
-          });
-        }
-      });
+          }
+        });
+      } catch (err) {
+        console.log("Decrypt error:  " + err.message);
+      }
       return json.data;
     }
     },

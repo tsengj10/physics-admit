@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% load staticfiles %}
+{% block title %}
+Admissions database - {{ team.college.name }} schedule editor
+{% endblock %}
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/media/css/jquery.dataTables.min.css" %}'>
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColVis/css/dataTables.colVis.min.css" %}'>
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/TableTools/css/dataTables.tableTools.min.css" %}'>
+<script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/media/js/jquery.dataTables.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
+<script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
+{% endblock %}
+{% block content %}
+<h2>Schedule editor for {{ team.college.name }} ({{ team.college.adss_code }})</h2>
+
+<p>Team:  {{ team.names }}</p>
+<p>Location:  {{ team.location }}</p>
+<p>Notes:  {{ team.notes }}</p>
+
+<p>
+<table cellspacing="0" cellpadding="3" border="1">
+<tr>
+  <th>Schedule Defaults</th>
+  <th>(minutes)</th>
+  <th>Name Actions</th>
+</tr>
+<tr>
+  <td>Interview duration</td>
+  <td></td>
+  <td><button type='button' id='rotatebutton'>Rotate selected</button</td>
+</tr>
+<tr>
+  <td>Break duration</td>
+  <td></td>
+  <td><button type='button' id='shufflebutton'>Shuffle selected</button</td>
+</tr>
+<tr>
+  <td><button type='button' id='recalcbutton'>Recalculate</button></td>
+  <td><button type='button' id='clearbutton'>Clear</button></td>
+  <td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
+</tr>
+</table>
+</p>
+
+<p>To leave schedule unchanged, leave this page without saving.</p>
+
+<p>
+<table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
+<thead>
+  <tr>
+    <th colspan="3">Change</th>
+    <th colspan="3">Current schedule</th>
+    <th colspan="6">Candidate</th>
+  </tr>
+  <tr>
+    <th>Date</th>
+    <th>Start</th>
+    <th>Duration</th>
+    <th>Date</th>
+    <th>Start</th>
+    <th>End time</th>
+    <th>Mode</th>
+    <th>Subject</th>
+    <th>Name</th>
+    <th>Disability</th>
+    <th>Notes</th>
+    <th>Other interviews</th>
+  </tr>
+</thead>
+<tfoot>
+  <tr>
+    <th>Date</th>
+    <th>Start</th>
+    <th>Duration</th>
+    <th>Date</th>
+    <th>Start</th>
+    <th>End time</th>
+    <th>Mode</th>
+    <th>Subject</th>
+    <th>Name</th>
+    <th>Disability</th>
+    <th>Notes</th>
+    <th>Other interviews</th>
+  </tr>
+</tfoot>
+<tbody>
+</tbody>
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// template entries:  team, students, slots
+var students = {};
+{% for student in students %}
+students[{{ student.pk }}] = {
+  "n": "{{ student.info.surname }}, {{ student.info.forenames }}",
+  "other": [],
+  "spec": "{{ student.info.has_special_needs }}",
+  "dcode": "{{ student.info.disability_code }}",
+  "dis": "{{ student.info.disability_notes }}",
+  "comments": [],
+};
+{% endfor %}
+
+{% for comment in comments %}
+students[{{ comment.candidate.pk }}]['comments'].push(
+    { "who": "{{ comment.commenter.user_id }}", "t": "{{ d.text }}" })
+{% endfor %}
+
+{% for slot in slots %}
+  {% if slot.team.pk == team.pk %}
+students[{{ slot.candidate.pk }}]["s"] = {
+    "subject": "{{ slot.subject }}",
+    "mode": "{{ slot.mode }}",
+    "datetime": '{{ slot.time|date:U }}',
+    "duration": "{{ slot.length }}",
+  });
+  {% else %}
+students[{{ slot.candidate.pk }}]["other"].push({
+    "tpk": {{ slot.team.pk }},
+    "tcol": "{{ slot.team.college.adss_code }}",
+    "mode": "{{ slot.mode }}",
+    "datetime": '{{ slot.time|date:U }}',
+  });
+  {% endif %}
+{% endfor %}
+
+var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function formatDate(d) {
+  var da = d.getDate();
+  var s = da < 10 ? "0" : "";
+  s += da;
+  s += " " + months[d.getMonth()];
+  return s;
+}
+
+function formatTime(d) {
+  return d.toLocaleTimeString();
+}
+
+var dataset = [];
+$.each(students, function(pk, v) {
+  fields = [];
+  fields.push(""); // date selector
+  fields.push(""); // start time selector
+  fields.push(""); // duration selector
+  if (v['s'] == undefined) {
+    fields.push(""); // empty date
+    fields.push(""); // empty start time
+    fields.push(""); // empty end time
+  } else {
+    var a = new Date(v.datetime * 1000);
+    var b = new Date((v.datetime + v.duration*60) * 1000);
+    fields.push(formatDate(a));
+    fields.push(formatTime(a));
+    fields.push(formatTime(b));
+  }
+  fields.push(v.mode); // should be a selector
+  fields.push(v.subject); // should be a selector
+  fields.push(v.n);
+  fields.push(v.dcode); // disability code (use tooltip for notes)
+  fields.push(v.comments.length);
+  // other interviews in v.other
+  fields.push(""); // other interviews
+  dataset.push(fields);
+});
+
+$(document).ready(function() {
+
+  var spec = {
+    data: dataset,
+    columns: [
+      { name: "changedate" },
+      { name: "changestart" },
+      { name: "changeduration" },
+      { name: "date" },
+      { name: "start" },
+      { name: "end" },
+      { name: "mode" },
+      { name: "subject" },
+      { name: "name" },
+      { name: "disability" },
+      { name: "notes" },
+      { name: "other" },
+    ]
+  };
+  $('#slots').DataTable(spec);
+
+});
+
+</script>
+{% endblock %}

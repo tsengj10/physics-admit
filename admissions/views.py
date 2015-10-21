@@ -282,31 +282,51 @@ def view_or_edit_schedule(request, team_pk, return_to=None):
   if not return_to:
     return_to = request.GET.get('next', reverse('admissions:colleges'))
   t = get_object_or_404(InterviewTeam, pk=team_pk)
-  c = get_object_or_404(College, adss_code=t.college.adss_code)
+  c = t.college
   if c in get_colleges_for_user(request.user):
     return edit_schedule(request, t, return_to)
   return view_schedule(request, c.adss_code, return_to)
 
-def edit_schedule(request, college, return_to='admissions:colleges'):
+def edit_schedule(request, team, return_to='admissions:colleges'):
+  college = team.college
+  if college not in get_colleges_for_user(request.user):
+    return redirect('admissions:colleges') # not authorized
   if request.method == 'POST':
-    if college not in get_colleges_for_user(request.user):
-      return redirect('admissions:colleges') # not authorized
     # parse request data
-    pass
+    post_slots(request.body.decode('utf-8'), team)
+    kwargs = { 'college_code': team.college.adss_code }
+    return redirect('admissions:view_schedule', **kwargs)
 
-  else:
-    # schedule form
-    pass
-
-  teams = college.interview_team.all()
-  slots = InterviewSlot.objects.filter(team__in=teams)
+  students1 = Candidate.objects.filter(college1=college)
+  students2 = Candidate.objects.filter(college2=college)
+  students = list(students1) + list(students2)
+  slots = InterviewSlot.objects.filter(candidate__in=students).prefetch_related(
+      'candidate', 'candidate.info', 'candidate.comments', 'team')
+  comments = Comment.objects.filter(candidate__in=students)
   template_values = {
       'return_to': return_to,
-      'college': college,
-      'teams': teams,
+      'team': team,
+      'students': students,
       'slots': slots,
+      'comments': comments,
       }
   return render(request, 'admissions/edit_schedule.html', template_values)
+
+def post_slots(body, team):
+  # get rid of old slots
+  InterviewSlot.objects.filter(team=team).delete()
+  data = json.loads(body)
+  for d in data:
+    s = InterviewSlot()
+    s.candidate = Candidate.get(pk=d['cpk'])
+    s.team = team
+    s.subject = InterviewSlot.PHYSICS if d['subject'] == 'P' else InterviewSlot.PHILOSOPHY
+    s.mode = InterviewSlot.LOCAL if d['mode'] == 'L' else InterviewSlot.REMOTE
+    s.time = datetime.fromtimestamp(d['t'])
+    s.length = (d['e'] - d['t']) / 60 # minutes
+    s.save()
+    # may want to save the new objects in an array and commit in a block with atomic()
+  return
 
 #===============================================================
 # API
