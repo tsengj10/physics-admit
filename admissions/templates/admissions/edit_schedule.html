@@ -63,22 +63,21 @@ input.change-duration { width: 3em }
   <td>Interview duration</td>
   <td><input type="number" name="interviewduration" style="width:5em"></td>
   <td><button type='button' id='rotatebutton'>Rotate selected</button</td>
-  <td><button type='button' id='physicsbutton'>Physics interviews</button></td>
+  <td><button type='button' id='physicsbutton' onclick='set_physics()'>Physics interviews</button></td>
 </tr>
 <tr>
   <td>Break duration</td>
   <td><input type="number" name="breakduration" style="width:5em"></td>
   <td><button type='button' id='shufflebutton'>Shuffle selected</button</td>
-  <td><button type='button' id='philosophybutton'>Philosophy interviews</button></td>
+  <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
 </tr>
 <tr>
-  <td><button type='button' id='recalcbutton'>Recalculate</button></td>
   <td><button type='button' id='clearbutton'>Clear</button></td>
-  <td><button type='button' id='allbutton'>Select all</button</td>
-  <td><button type='button' id='reversebutton'>Reverse selection</button></td>
+  <td><button type='button' id='recalcbutton'>Recalculate</button></td>
+  <td><button type='button' id='reversebutton' onclick='reverse_selection()'>Reverse selection</button></td>
+  <td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
 </tr>
 </table>
-<td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
 </p>
 
 <p>To leave schedule unchanged, leave this page without saving.</p>
@@ -87,13 +86,14 @@ input.change-duration { width: 3em }
 <table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
 <thead>
   <tr>
-    <th colspan="3" align="left">Change</th>
+    <th></th>
+    <th colspan="2" align="left">Change</th>
     <th colspan="3" align="left">Current schedule</th>
     <th colspan="6" align="left">Candidate</th>
     <th></th>
   </tr>
   <tr>
-    <th>Date</th>
+    <th><input type='checkbox' id='arsel' onchange='all_select()'></th>
     <th>Start</th>
     <th>Duration</th>
     <th>Date</th>
@@ -110,7 +110,7 @@ input.change-duration { width: 3em }
 </thead>
 <tfoot>
   <tr>
-    <th>Date</th>
+    <th></th>
     <th>Start</th>
     <th>Duration</th>
     <th>Date</th>
@@ -202,6 +202,43 @@ function format_comments(pk, jrow) {
   return s.join('');
 }
 
+function all_select() {
+  //console.log("all_select " + $('#arsel').prop('checked'));
+  var value = $('#arsel').prop('checked');
+  $('.rsel').prop('checked', value);
+}
+
+function reverse_selection() {
+  $('.rsel').prop('checked', function(i, val) { return !val; });
+}
+
+// check that this changes all of them even if over the page
+function set_physics() {
+  $('.isubjects').val("1");
+  $('.imodes').val(function(i, old) { return old == "" ? "L" : old });
+  $('.rsel').prop('checked', true);
+  enable_save();
+}
+
+// check that this changes all of them even if over the page
+function set_philosophy() {
+  $('.isubjects').val("2");
+  $('.imodes').val(function(i, old) { return old == "" ? "L" : old });
+  $('.rsel').each(function(i, e) {
+    var row = $(this).closest('tr');
+    $(this).prop('checked', row.data()[7] == "2");
+  });
+  enable_save();
+}
+
+function render_rselection(data, type, row, meta) {
+  if (type = "display") {
+    return '<input type="checkbox" class="rsel">';
+  } else {
+    return data;
+  }
+}
+
 function render_change_start(data, type, row, meta) {
   if (type == "display") {
     return '<input id="datetimepicker' + row[12] + '" type="text">';
@@ -239,11 +276,13 @@ function render_end(data, type, row, meta) {
 function render_mode(data, type, row, meta) {
   if (type === "display") {
     var td = [];
-    td.push('<select onchange="enable_save()">');
-    td.push('<option value="0">no interview</option>');
-    td.push('<option value="L">local</option>');
-    td.push('<option value="R">remote</option>');
-    td.push('</select>');
+    td.push('<select class="imodes" onchange="enable_save()"><option value="0"');
+    if (data == "") td.push(' selected="selected"');
+    td.push('>no interview</option><option value="L"');
+    if (data == "L") td.push(' selected="selected"');
+    td.push('>local</option><option value="R"');
+    if (data == "R") td.push(' selected="selected"');
+    td.push('>remote</option></select>');
     return td.join('');
   } else {
     return data;
@@ -253,10 +292,11 @@ function render_mode(data, type, row, meta) {
 function render_subject(data, type, row, meta) {
   if (type === "display") {
     var td = [];
-    td.push('<select onchange="enable_save()">');
-    td.push('<option value="1">physics</option>');
-    td.push('<option value="2">philosophy</option>');
-    td.push('</select>');
+    td.push('<select class="isubjects" onchange="enable_save()"><option value="1"');
+    if (data != "2") td.push(' selected="selected"');
+    td.push('>physics</option><option value="2"');
+    if (data == "2") td.push(' selected="selected"');
+    td.push('>philosophy</option></select>');
     return td.join('');
   } else {
     return data;
@@ -271,10 +311,28 @@ function disable_save() {
   $('.statebutton').attr('disabled','disabled');
 }
 
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+var csrftoken = $.cookie('csrftoken');
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+//"csrfmiddlewaretoken" is a key in your posted data,for example,
+//when you need to ajax login,your posted data may like this:
+// {'username':'username','password':'password',
+//  'csrfmiddlewaretoken':'CSRF-TOKEN-V‌​ALUE'} – 
+
 var dataset = [];
 $.each(students, function(pk, v) {
   var fields = [];
-  fields[0] = ""; // date selector
+  fields[0] = ""; // row selector checkboxes
   fields[1] = ""; // start time selector
   fields[2] = ""; // duration selector
   fields[3] = ""; // empty date
@@ -285,13 +343,10 @@ $.each(students, function(pk, v) {
   if (v['s'] != undefined) {
     var a = new Date(v.s.datetime * 1000);
     var b = new Date((v.s.datetime + v.s.duration*60) * 1000);
-    //fields[3] = formatDate(a);
-    //fields[4] = formatTime(a);
-    //fields[5] = formatTime(b);
     fields[4] = v.s.datetime;
     fields[5] = v.s.datetime + v.s.duration*60;
-    fields[6] = v.s.mode; // should be a selector
-    fields[7] = v.s.subject; // should be a selector
+    fields[6] = v.s.mode == 'local' ? 'L' : 'R'; // should be a selector
+    fields[7] = v.s.subject == 'physics' ? '1' : '2'; // should be a selector
   }
   fields[8] = v.course;
   fields[9] = v.n;
@@ -318,9 +373,9 @@ $(document).ready(function() {
     dom: 'T<"clear">lfrtip', // add an R to use colReorder
     data: dataset,
     columns: [
-      { name: "changedate", visible: false }, // spare
-      { name: "changestart", "class": "datetimepickers", "render": render_change_start },
-      { name: "changeduration", "render": render_change_duration },
+      { name: "rselection", orderable: false, "render": render_rselection }, // row selection checkboxes
+      { name: "changestart", orderable: false, "class": "datetimepickers", "render": render_change_start },
+      { name: "changeduration", orderable: false, "render": render_change_duration },
       { name: "date", visible: false }, // spare
       { name: "start", "render": render_start },
       { name: "end", "render": render_end },
@@ -333,6 +388,7 @@ $(document).ready(function() {
       { name: "pk", visible: false },
     ],
     "pageLength": 50,
+    "order": [ [ 4, "asc" ] ],
     "statesave": true,
     "tableTools": {
       "aButtons": [
@@ -349,19 +405,37 @@ $(document).ready(function() {
   };
   table = $('#slots').DataTable(spec);
 
+  $.each(students, function(pk, s) {
+    var nm = "#datetimepicker" + pk;
+    $(nm).datetimepicker({
+      minDate: "2015/12/01",
+      maxDate: "2015/12/17",
+      startDate: "2015/12/14",
+      defaultTime: "14:00"
+    });
+  });
+
   $('#slots tbody').on('click', 'td.comments-detail', function() {
     var tr = $(this).closest('tr');
     var row = table.row(tr);
     if (row.child.isShown()) {
       row.child.hide();
-      tr.removeClass('shown-comments');
+      //tr.removeClass('shown-comments');
     } else {
       var child = row.child(format_comments(row.data()[12], row.index()) );
       child.show();
-      tr.addClass('shown-comments');
+      //tr.addClass('shown-comments');
     }
   });
+  //.on('click', 'tr', function() {
+  //  $(this).toggleClass('selected');
+    // clicking on anything in the row flips the class
+    // (and whatever the class name is).
+    // This introduces some weird behavior, but at least
+    // the visual style of a selected row does reflect the selection state.
+  //});
 
+/*
   // insert initial changeable states
   table.$('.mode-selector').each(function(i, e) {
     var tr = $(e).closest('tr');
@@ -379,7 +453,9 @@ $(document).ready(function() {
       }
     }
   });
+*/
 
+/*
   table.$('.subject-selector').each(function(i, e) {
     var tr = $(e).closest('tr');
     var row = table.row(tr);
@@ -400,6 +476,7 @@ $(document).ready(function() {
       defaultTime: "14:00"
     });
   });
+*/
 
   disable_save();
 
