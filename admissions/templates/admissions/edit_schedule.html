@@ -219,7 +219,7 @@ function render_change_duration(data, type, row, meta) {
 }
 
 function render_start(data, type, row, meta) {
-  if (type == "display") {
+  if (type == "display" && data != "") {
     var a = new Date(data * 1000);
     return formatDate(a) + " " + formatTime(a);
   } else {
@@ -228,7 +228,7 @@ function render_start(data, type, row, meta) {
 }
 
 function render_end(data, type, row, meta) {
-  if (type == "display") {
+  if (type == "display" && data != "") {
     var a = new Date(data * 1000);
     return formatTime(a);
   } else {
