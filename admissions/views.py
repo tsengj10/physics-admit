@@ -297,8 +297,8 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
     kwargs = { 'college_code': team.college.adss_code }
     return redirect('admissions:view_schedule', **kwargs)
 
-  students1 = Candidate.objects.filter(college1=college)
-  students2 = Candidate.objects.filter(college2=college)
+  students1 = Candidate.objects.filter(college1=college, state=Candidate.STATE_SUMMONED)
+  students2 = Candidate.objects.filter(college2=college, state=Candidate.STATE_SUMMONED)
   students = list(students1) + list(students2)
   slots = InterviewSlot.objects.filter(candidate__in=students).prefetch_related(
       'candidate', 'team')

@@ -9,11 +9,14 @@ Admissions database - {{ team.college.name }} schedule editor
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/media/css/jquery.dataTables.min.css" %}'>
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColVis/css/dataTables.colVis.min.css" %}'>
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/TableTools/css/dataTables.tableTools.min.css" %}'>
+<link rel="stylesheet" type="text/css" href='{% static "js/datetimepicker-master/jquery.datetimepicker.css" %}'/ >
 <script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
+<!--script src='{% static "js/datetimepicker-master/jquery.js" %}'></script-->
 <script src='{% static "js/DataTables-1.10.2/media/js/jquery.dataTables.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
 <script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
+<script src='{% static "js/datetimepicker-master/build/jquery.datetimepicker.full.min.js" %}'></script>
 <style>
 table#teamspec { font-size: 16px; text-align: left }
 
@@ -24,7 +27,7 @@ td.comments-detail {
 
 .comments { text-align: left }
 
-tr.shown-comments { text-align: left }
+input.change-duration { width: 3em }
 
 </style>
 {% endblock %}
@@ -53,21 +56,25 @@ tr.shown-comments { text-align: left }
 <tr>
   <th>Schedule Defaults</th>
   <th>(minutes)</th>
-  <th>Name Actions</th>
+  <th>Candidate Actions</th>
+  <th>Course Actions</th>
 </tr>
 <tr>
   <td>Interview duration</td>
   <td><input type="number" name="interviewduration" style="width:5em"></td>
   <td><button type='button' id='rotatebutton'>Rotate selected</button</td>
+  <td><button type='button' id='physicsbutton'>Physics interviews</button></td>
 </tr>
 <tr>
   <td>Break duration</td>
   <td><input type="number" name="breakduration" style="width:5em"></td>
   <td><button type='button' id='shufflebutton'>Shuffle selected</button</td>
+  <td><button type='button' id='philosophybutton'>Philosophy interviews</button></td>
 </tr>
 <tr>
   <td><button type='button' id='recalcbutton'>Recalculate</button></td>
   <td><button type='button' id='clearbutton'>Clear</button></td>
+  <td><button type='button' id='allbutton'>Select all</button</td>
   <td><button type='button' id='reversebutton'>Reverse selection</button></td>
 </tr>
 </table>
@@ -92,10 +99,10 @@ tr.shown-comments { text-align: left }
     <th>Date</th>
     <th>Start</th>
     <th>End time</th>
-    <th>Mode</th>
+    <th>Type</th>
     <th>Subject</th>
+    <th>Course</th>
     <th>Name</th>
-    <th>Disability</th>
     <th>Notes</th>
     <th>Other interviews</th>
     <th>Index</th>
@@ -109,16 +116,20 @@ tr.shown-comments { text-align: left }
     <th>Date</th>
     <th>Start</th>
     <th>End time</th>
-    <th>Mode</th>
+    <th>Type</th>
     <th>Subject</th>
+    <th>Course</th>
     <th>Name</th>
-    <th>Disability</th>
     <th>Notes</th>
     <th>Other interviews</th>
     <th>Index</th>
   </tr>
 </tfoot>
 </table>
+</p>
+
+<p>
+<a href="{% url 'admissions:view_schedule' college_code=team.college.adss_code|lower %}">[Return to college interview schedule]</a>
 </p>
 {% endblock %}
 
@@ -129,6 +140,7 @@ var students = {};
 {% for student in students %}
 students[{{ student.pk }}] = {
   "n": "{{ student.info.surname }}, {{ student.info.forenames }}",
+  "course": "{{ student.course_type }}",
   "other": [],
   "spec": "{{ student.info.has_special_needs }}",
   "dcode": "{{ student.info.disability_code }}",
@@ -190,6 +202,75 @@ function format_comments(pk, jrow) {
   return s.join('');
 }
 
+function render_change_start(data, type, row, meta) {
+  if (type == "display") {
+    return '<input id="datetimepicker' + row[12] + '" type="text">';
+  } else {
+    return data;
+  }
+}
+
+function render_change_duration(data, type, row, meta) {
+  if (type == "display") {
+    return '<input type="number" class="change-duration">';
+  } else {
+    return data;
+  }
+}
+
+function render_start(data, type, row, meta) {
+  if (type == "display") {
+    var a = new Date(data * 1000);
+    return formatDate(a) + " " + formatTime(a);
+  } else {
+    return data;
+  }
+}
+
+function render_end(data, type, row, meta) {
+  if (type == "display") {
+    var a = new Date(data * 1000);
+    return formatTime(a);
+  } else {
+    return data;
+  }
+}
+
+function render_mode(data, type, row, meta) {
+  if (type === "display") {
+    var td = [];
+    td.push('<select onchange="enable_save()">');
+    td.push('<option value="0">no interview</option>');
+    td.push('<option value="L">local</option>');
+    td.push('<option value="R">remote</option>');
+    td.push('</select>');
+    return td.join('');
+  } else {
+    return data;
+  }
+}
+
+function render_subject(data, type, row, meta) {
+  if (type === "display") {
+    var td = [];
+    td.push('<select onchange="enable_save()">');
+    td.push('<option value="1">physics</option>');
+    td.push('<option value="2">philosophy</option>');
+    td.push('</select>');
+    return td.join('');
+  } else {
+    return data;
+  }
+}
+
+function enable_save() {
+  $('.statebutton').removeAttr('disabled');
+}
+
+function disable_save() {
+  $('.statebutton').attr('disabled','disabled');
+}
+
 var dataset = [];
 $.each(students, function(pk, v) {
   var fields = [];
@@ -202,15 +283,17 @@ $.each(students, function(pk, v) {
   if (v['s'] != undefined) {
     var a = new Date(v.s.datetime * 1000);
     var b = new Date((v.s.datetime + v.s.duration*60) * 1000);
-    fields[3] = formatDate(a);
-    fields[4] = formatTime(a);
-    fields[5] = formatTime(b);
+    //fields[3] = formatDate(a);
+    //fields[4] = formatTime(a);
+    //fields[5] = formatTime(b);
+    fields[4] = v.s.datetime;
+    fields[5] = v.s.datetime + v.s.duration*60;
   }
   fields[6] = v.s.mode; // should be a selector
   fields[7] = v.s.subject; // should be a selector
-  fields[8] = v.n;
-  fields[9] = v.dcode == 'A' ? '' : v.dcode; // disability code
-  fields[10] = v.comments.length;
+  fields[8] = v.course;
+  fields[9] = v.n;
+  fields[10] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes
   // other interviews in v.other
   var s = [];
   for (var i = 0; i < v.other.length; ++i) {
@@ -233,16 +316,16 @@ $(document).ready(function() {
     dom: 'T<"clear">lfrtip', // add an R to use colReorder
     data: dataset,
     columns: [
-      { name: "changedate" },
-      { name: "changestart" },
-      { name: "changeduration" },
-      { name: "date" },
-      { name: "start" },
-      { name: "end" },
-      { name: "mode" },
-      { name: "subject" },
+      { name: "changedate", visible: false }, // spare
+      { name: "changestart", "class": "datetimepickers", "render": render_change_start },
+      { name: "changeduration", "render": render_change_duration },
+      { name: "date", visible: false }, // spare
+      { name: "start", "render": render_start },
+      { name: "end", "render": render_end },
+      { name: "mode", "class": "mode-selector", "render": render_mode },
+      { name: "subject", "class": "subject-selector", "render": render_subject },
+      { name: "course" },
       { name: "name" },
-      { name: "disability", "class": "comments-detail" },
       { name: "notes", "class": "comments-detail" },
       { name: "other" },
       { name: "pk", visible: false },
@@ -277,7 +360,47 @@ $(document).ready(function() {
     }
   });
 
-});
+  // insert initial changeable states
+  table.$('.mode-selector').each(function(i, e) {
+    var tr = $(e).closest('tr');
+    var row = table.row(tr);
+    var pk = row.data()[12];
+    //console.log("Candidate " + pk + " mode " + students[pk].s.mode);
+    if (students[pk] == undefined) {
+      $("select", e).val('0');
+      //console.log("no such pk");
+    } else {
+      if ('s' in students[pk]) {
+        $("select", e).val(students[pk].s.mode == 'local' ? 'L' : 'R');
+      } else {
+        //console.log("no interview");
+      }
+    }
+  });
 
+  table.$('.subject-selector').each(function(i, e) {
+    var tr = $(e).closest('tr');
+    var row = table.row(tr);
+    var pk = row.data()[12];
+    if (students[pk] == undefined) {
+      $("select", e).val('1');
+    } else {
+      if ('s' in students[pk]) {
+        $("select", e).val(students[pk].s.subject == 'physics' ? '1' : '2');
+      }
+    }
+    // also initialize datetimepickers
+    var nm = "#datetimepicker" + pk;
+    $(nm).datetimepicker({
+      minDate: "2015/12/01",
+      maxDate: "2015/12/17",
+      startDate: "2015/12/14",
+      defaultTime: "14:00"
+    });
+  });
+
+  disable_save();
+
+});
 </script>
 {% endblock %}
