@@ -14,13 +14,39 @@ Admissions database - {{ team.college.name }} schedule editor
 <script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
 <script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
+<style>
+table#teamspec { font-size: 16px; text-align: left }
+
+td.comments-detail {
+  color: blue;
+  cursor: pointer;
+}
+
+.comments { text-align: left }
+
+tr.shown-comments { text-align: left }
+
+</style>
 {% endblock %}
 {% block content %}
 <h2>Schedule editor for {{ team.college.name }} ({{ team.college.adss_code }})</h2>
 
-<p>Team:  {{ team.names }}</p>
-<p>Location:  {{ team.location }}</p>
-<p>Notes:  {{ team.notes }}</p>
+<p>
+<table id="teamspec" cellpadding="3">
+<tr>
+  <td>Team:</td>
+  <td>{{ team.names }}</td>
+</tr>
+<tr>
+  <td>Location:</td>
+  <td>{{ team.location }}</td>
+</tr>
+<tr>
+  <td>Notes:</td>
+  <td>{{ team.notes }}</td>
+</tr>
+</table>
+</p>
 
 <p>
 <table cellspacing="0" cellpadding="3" border="1">
@@ -31,20 +57,21 @@ Admissions database - {{ team.college.name }} schedule editor
 </tr>
 <tr>
   <td>Interview duration</td>
-  <td></td>
+  <td><input type="number" name="interviewduration" style="width:5em"></td>
   <td><button type='button' id='rotatebutton'>Rotate selected</button</td>
 </tr>
 <tr>
   <td>Break duration</td>
-  <td></td>
+  <td><input type="number" name="breakduration" style="width:5em"></td>
   <td><button type='button' id='shufflebutton'>Shuffle selected</button</td>
 </tr>
 <tr>
   <td><button type='button' id='recalcbutton'>Recalculate</button></td>
   <td><button type='button' id='clearbutton'>Clear</button></td>
-  <td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
+  <td><button type='button' id='reversebutton'>Reverse selection</button></td>
 </tr>
 </table>
+<td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
 </p>
 
 <p>To leave schedule unchanged, leave this page without saving.</p>
@@ -56,6 +83,7 @@ Admissions database - {{ team.college.name }} schedule editor
     <th colspan="3" align="left">Change</th>
     <th colspan="3" align="left">Current schedule</th>
     <th colspan="6" align="left">Candidate</th>
+    <th></th>
   </tr>
   <tr>
     <th>Date</th>
@@ -70,6 +98,7 @@ Admissions database - {{ team.college.name }} schedule editor
     <th>Disability</th>
     <th>Notes</th>
     <th>Other interviews</th>
+    <th>Index</th>
   </tr>
 </thead>
 <tfoot>
@@ -86,6 +115,7 @@ Admissions database - {{ team.college.name }} schedule editor
     <th>Disability</th>
     <th>Notes</th>
     <th>Other interviews</th>
+    <th>Index</th>
   </tr>
 </tfoot>
 </table>
@@ -109,7 +139,7 @@ students[{{ student.pk }}] = {
 
 {% for comment in comments %}
 students[{{ comment.candidate.pk }}]['comments'].push(
-    { "who": "{{ comment.commenter.user_id }}", "t": "{{ d.text }}" })
+    { "who": "{{ comment.commenter.username }}", "t": "{{ comment.text }}" })
 {% endfor %}
 
 {% for slot in slots %}
@@ -132,16 +162,32 @@ students[{{ slot.candidate.pk }}]["other"].push({
 
 var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+function twoDigit(n) {
+  var s = (n < 10 ? "0" : "");
+  return s + n;
+}
+
 function formatDate(d) {
-  var da = d.getDate();
-  var s = da < 10 ? "0" : "";
-  s += da;
-  s += " " + months[d.getMonth()];
-  return s;
+  return twoDigit(d.getDate()) + " " + months[d.getMonth()];
 }
 
 function formatTime(d) {
-  return d.toLocaleTimeString();
+  //return d.toLocaleTimeString();
+  return twoDigit(d.getHours()) + ":" + twoDigit(d.getMinutes());
+}
+
+function format_comments(pk, jrow) {
+  var s = [];
+  var d = students[pk];
+  var c = d.comments;
+  s.push('<p><ul class="comments">');
+  s.push("<li><b>UCAS disability information</b><br>(" + d.dcode + ") " + d.dis);
+  for (var i = 0; i < c.length; ++i) {
+    s.push("<li><b>" + c[i].who + "</b><br>" +
+           c[i].t.replace('&#10;','<br>').replace('\n','<br>').replace('\r',''));
+  }
+  s.push('</ul></p>');
+  return s.join('');
 }
 
 var dataset = [];
@@ -163,10 +209,18 @@ $.each(students, function(pk, v) {
   fields[6] = v.s.mode; // should be a selector
   fields[7] = v.s.subject; // should be a selector
   fields[8] = v.n;
-  fields[9] = v.dcode; // disability code (use tooltip for notes)
+  fields[9] = v.dcode == 'A' ? '' : v.dcode; // disability code
   fields[10] = v.comments.length;
   // other interviews in v.other
-  fields[11] = ""; // other interviews
+  var s = [];
+  for (var i = 0; i < v.other.length; ++i) {
+    var u = v.other[i];
+    var a = new Date(u.datetime * 1000);
+    s.push((u.mode != "local" ? "("+u.mode+") " : " ") +
+           u.tcol + " " + formatDate(a) + " " + formatTime(a));
+  }
+  fields[11] = s.join('; ');
+  fields[12] = pk;
   //console.log(fields);
   dataset.push(fields);
 });
@@ -174,7 +228,9 @@ $.each(students, function(pk, v) {
 
 $(document).ready(function() {
 
+  // dom:  T for TableTools, and C... for ColVis
   var spec = {
+    dom: 'T<"clear">lfrtip', // add an R to use colReorder
     data: dataset,
     columns: [
       { name: "changedate" },
@@ -186,12 +242,40 @@ $(document).ready(function() {
       { name: "mode" },
       { name: "subject" },
       { name: "name" },
-      { name: "disability" },
-      { name: "notes" },
+      { name: "disability", "class": "comments-detail" },
+      { name: "notes", "class": "comments-detail" },
       { name: "other" },
-    ]
+      { name: "pk", visible: false },
+    ],
+    "pageLength": 50,
+    "statesave": true,
+    "tableTools": {
+      "aButtons": [
+        "copy",
+        "csv",
+        {
+          "sExtends": "pdf",
+          "sPdfOrientation": "portrait"
+        },
+        "print"
+      ],
+      "sSwfPath": '{% static "js/DataTables-1.10.2/extensions/TableTools/swf/copy_csv_xls_pdf.swf" %}'
+    }
   };
-  $('#slots').DataTable(spec);
+  table = $('#slots').DataTable(spec);
+
+  $('#slots tbody').on('click', 'td.comments-detail', function() {
+    var tr = $(this).closest('tr');
+    var row = table.row(tr);
+    if (row.child.isShown()) {
+      row.child.hide();
+      tr.removeClass('shown-comments');
+    } else {
+      var child = row.child(format_comments(row.data()[12], row.index()) );
+      child.show();
+      tr.addClass('shown-comments');
+    }
+  });
 
 });
 

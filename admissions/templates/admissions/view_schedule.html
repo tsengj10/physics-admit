@@ -146,10 +146,24 @@ $.each(students, function(pk, v) {
 $(document).ready(function() {
 
   var spec = {
+    dom: 'TC<"clear">lfrtip', // add an R to use colReorder
     data: dataset,
     columns: [
       { name: "name" },
-    ]
+    ],
+    "statesave": true,
+    "tableTools": {
+      "aButtons": [
+        "copy",
+        "csv",
+        {
+          "sExtends": "pdf",
+          "sPdfOrientation": "portrait"
+        },
+        "print"
+      ],
+      "sSwfPath": '{% static "js/DataTables-1.10.2/extensions/TableTools/swf/copy_csv_xls_pdf.swf" %}'
+    }
   };
   for (var i = 0; i < teams.length; ++i) {
     spec.columns.push({ name: "subject" + i });
