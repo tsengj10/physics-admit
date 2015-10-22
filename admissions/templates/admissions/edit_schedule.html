@@ -280,6 +280,8 @@ $.each(students, function(pk, v) {
   fields[3] = ""; // empty date
   fields[4] = ""; // empty start time
   fields[5] = ""; // empty end time
+  fields[6] = ""; // mode / interview type
+  fields[7] = ""; // subject of interview
   if (v['s'] != undefined) {
     var a = new Date(v.s.datetime * 1000);
     var b = new Date((v.s.datetime + v.s.duration*60) * 1000);
@@ -288,9 +290,9 @@ $.each(students, function(pk, v) {
     //fields[5] = formatTime(b);
     fields[4] = v.s.datetime;
     fields[5] = v.s.datetime + v.s.duration*60;
+    fields[6] = v.s.mode; // should be a selector
+    fields[7] = v.s.subject; // should be a selector
   }
-  fields[6] = v.s.mode; // should be a selector
-  fields[7] = v.s.subject; // should be a selector
   fields[8] = v.course;
   fields[9] = v.n;
   fields[10] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes

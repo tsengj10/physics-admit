@@ -744,8 +744,8 @@ class InterviewTeam(models.Model):
   """An interview team with a college and location"""
   college = models.ForeignKey('College', null=True, related_name="interview_team")
   names = models.CharField(max_length=255, help_text="Names on interview team")
-  location = models.CharField(max_length=255, help_text="Normal location")
-  notes = models.TextField(help_text="General instructions to all interviewees")
+  location = models.CharField(max_length=255, help_text="Normal location", blank=True)
+  notes = models.TextField(help_text="General instructions to all interviewees", blank=True)
 
   def __str__(self):
     return "{0} ({1})".format(self.names, self.college.name)
