@@ -62,17 +62,17 @@ input.change-duration { width: 3em }
 <tr>
   <td>Interview duration</td>
   <td><input type="number" name="interviewduration" style="width:5em"></td>
-  <td><button type='button' id='rotatebutton'>Rotate selected</button</td>
+  <td><button type='button' id='rotatebutton' onclick='rotate_selection()'>Rotate selected</button</td>
   <td><button type='button' id='physicsbutton' onclick='set_physics()'>Physics interviews</button></td>
 </tr>
 <tr>
   <td>Break duration</td>
   <td><input type="number" name="breakduration" style="width:5em"></td>
-  <td><button type='button' id='shufflebutton'>Shuffle selected</button</td>
+  <td><button type='button' id='shufflebutton' onclick='shuffle_selection()'>Shuffle selected</button</td>
   <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
 </tr>
 <tr>
-  <td><button type='button' id='clearbutton'>Clear</button></td>
+  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear</button></td>
   <td><button type='button' id='recalcbutton'>Recalculate</button></td>
   <td><button type='button' id='reversebutton' onclick='reverse_selection()'>Reverse selection</button></td>
   <td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
@@ -212,23 +212,44 @@ function reverse_selection() {
   $('.rsel').prop('checked', function(i, val) { return !val; });
 }
 
-// check that this changes all of them even if over the page
 function set_physics() {
-  $('.isubjects').val("1");
-  $('.imodes').val(function(i, old) { return old == "" ? "L" : old });
+  $('.isubjects').val("1"); // change all to physics interviews
+  $('.imodes').val(function(i, old) { return old == "0" ? "L" : old }).change();
   $('.rsel').prop('checked', true);
   enable_save();
 }
 
-// check that this changes all of them even if over the page
 function set_philosophy() {
-  $('.isubjects').val("2");
-  $('.imodes').val(function(i, old) { return old == "" ? "L" : old });
   $('.rsel').each(function(i, e) {
-    var row = $(this).closest('tr');
-    $(this).prop('checked', row.data()[7] == "2");
+    var row = $(this).parents('tr');
+    var course = row.children('.course-type').text();
+    if (course == "P" || course == "Q") {
+      $(this).prop('checked', true);
+      $('.imodes', row).val(function(i, old) { return old == "0" ? "L" : old });
+      $('.isubjects', row).val("2");
+    } else {
+      $(this).prop('checked', false);
+      $('.imodes', row).val("0");
+    }
   });
   enable_save();
+}
+
+function clear_blanks() {
+  var t = $('#slots');
+  $('[type=text],[type=number]', t).val("");
+}
+
+// may need a button for rotating up.  This rotates down.
+function rotate_selection() {
+  var info = [];
+  $('.rsel:checked').each(function(i, e) {
+    // rows come out in order
+    var row = $(this).parents('tr');
+  });
+}
+
+function shuffle_selection() {
 }
 
 function render_rselection(data, type, row, meta) {
@@ -381,11 +402,11 @@ $(document).ready(function() {
       { name: "end", "render": render_end },
       { name: "mode", "class": "mode-selector", "render": render_mode },
       { name: "subject", "class": "subject-selector", "render": render_subject },
-      { name: "course" },
+      { name: "course", "class": "course-type" },
       { name: "name" },
       { name: "notes", "class": "comments-detail" },
       { name: "other" },
-      { name: "pk", visible: false },
+      { name: "pk", "class": "pk-value", visible: false },
     ],
     "pageLength": 50,
     "order": [ [ 4, "asc" ] ],
@@ -401,7 +422,8 @@ $(document).ready(function() {
         "print"
       ],
       "sSwfPath": '{% static "js/DataTables-1.10.2/extensions/TableTools/swf/copy_csv_xls_pdf.swf" %}'
-    }
+    },
+    "paging": false
   };
   table = $('#slots').DataTable(spec);
 
