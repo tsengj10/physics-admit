@@ -240,13 +240,56 @@ function clear_blanks() {
   $('[type=text],[type=number]', t).val("");
 }
 
+function copy(o) {
+   var out, v, key;
+   out = Array.isArray(o) ? [] : {};
+   for (key in o) {
+       v = o[key];
+       out[key] = (typeof v === "object") ? copy(v) : v;
+   }
+   return out;
+}
+
+function copy_candidate_data(target, source) {
+  // only copy candidate information
+  for (var i = 8; i < source.length; ++i) target[i] = source[i];
+}
+
+function copy_candidate_row(tab, row, newdata) {
+  var data = tab.row(row).data();
+  copy_candidate_data(data, newdata);
+  tab.row(row).data(data);
+  $('.imodes', row).val(newdata[6]);
+  $('.isubjects', row).val(newdata[7]);
+}
+
+function get_candidate_data(tab, row) {
+  var data = tab.row(row).data();
+  var out = copy(data); // need to make sure we deep-copy the data
+  out[6] = $('.imodes', row).val();
+  out[7] = $('.isubjects', row).val();
+  console.log('get_candidate_data:  mode=' + out[6] + " subject=" + out[7]);
+  return out;
+}
+
 // may need a button for rotating up.  This rotates down.
 function rotate_selection() {
-  var info = [];
-  $('.rsel:checked').each(function(i, e) {
+  var checked = $('.rsel:checked');
+  if (checked.length < 2) return;
+  var tab = $('#slots').DataTable();
+  var olddata = [];
+  var notfirst = false;
+  checked.each(function(i, e) {
     // rows come out in order
     var row = $(this).parents('tr');
+    //var tr = tab.row(row);
+    var data = get_candidate_data(tab, row); // deep copy
+    if (notfirst) copy_candidate_row(tab, row, olddata);
+    notfirst = true;
+    olddata = data;
   });
+  var row = checked.eq(0).parents('tr');
+  copy_candidate_row(tab, row, olddata);
 }
 
 function shuffle_selection() {
