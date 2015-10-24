@@ -62,7 +62,7 @@ input.change-duration { width: 3em }
 <tr>
   <td>Interview duration</td>
   <td><input type="number" name="interviewduration" style="width:5em"></td>
-  <td><button type='button' id='rotatebutton' onclick='rotate_selection()'>Rotate selected</button</td>
+  <td><button type='button' id='rotatebutton' onclick='rotate_candidates()'>Rotate selected</button</td>
   <td><button type='button' id='physicsbutton' onclick='set_physics()'>Physics interviews</button></td>
 </tr>
 <tr>
@@ -272,6 +272,39 @@ function get_candidate_data(tab, row) {
   return out;
 }
 
+// get candidate from a row into a transferable form
+function get_candidate_data(tab, row) {
+  var row = tab.row(row);
+  var cdata = copy(tab.row(row).columns('.c-data').data());
+  cdata['m'] = $('.imodes', row).val();
+  cdata['s'] = $('.isubjects', row).val();
+  console.log('get_candidate_data');
+  console.log(cdata);
+  return cdata;
+}
+
+function set_candidate_data(tab, row, data) {
+}
+
+function rotate_candidates() {
+  var checked = $('.rsel:checked').parents('tr');
+  if (checked.length < 2) return;
+  var tab = $('#slots').DataTable();
+  var pks2 = tab.cells(checked, '.pk-value').data();
+  console.log('pks2');
+  console.log(pks2);
+
+  // for some reason, the below still clears all the inputs,
+  // and then the datetimepickers disappear,
+  // indicating that they've been detached as well
+  for (var ic = 8; ic <= 12; ++ic) {
+    var cdata = tab.cells(checked, ic).data();
+    checked.each(function(i) {
+      tab.cell($(this), ic).data(cdata[(i == 0 ? cdata.length : i) - 1]);
+    });
+  }
+}
+
 // may need a button for rotating up.  This rotates down.
 function rotate_selection() {
   var checked = $('.rsel:checked');
@@ -443,13 +476,13 @@ $(document).ready(function() {
       { name: "date", visible: false }, // spare
       { name: "start", "render": render_start },
       { name: "end", "render": render_end },
-      { name: "mode", "class": "mode-selector", "render": render_mode },
-      { name: "subject", "class": "subject-selector", "render": render_subject },
-      { name: "course", "class": "course-type" },
-      { name: "name" },
-      { name: "notes", "class": "comments-detail" },
-      { name: "other" },
-      { name: "pk", "class": "pk-value", visible: false },
+      { name: "mode", "class": "mode-selector c-data", "render": render_mode },
+      { name: "subject", "class": "subject-selector c-data", "render": render_subject },
+      { name: "course", "class": "course-type c-data" },
+      { name: "name", "class": "c-data" },
+      { name: "notes", "class": "comments-detail c-data" },
+      { name: "other", "class": "c-data" },
+      { name: "pk", "class": "pk-value c-data", visible: false },
     ],
     "pageLength": 50,
     "order": [ [ 4, "asc" ] ],
