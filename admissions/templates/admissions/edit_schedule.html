@@ -68,7 +68,7 @@ input.change-duration { width: 3em }
 <tr>
   <td>Break duration</td>
   <td><input type="number" name="breakduration" style="width:5em"></td>
-  <td><button type='button' id='shufflebutton' onclick='shuffle_selection()'>Shuffle selected</button</td>
+  <td><button type='button' id='shufflebutton' onclick='shuffle_candidates()'>Shuffle selected</button</td>
   <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
 </tr>
 <tr>
@@ -250,39 +250,6 @@ function copy(o) {
    return out;
 }
 
-function copy_candidate_data(target, source) {
-  // only copy candidate information
-  for (var i = 8; i < source.length; ++i) target[i] = source[i];
-}
-
-function copy_candidate_row(tab, row, newdata) {
-  var data = tab.row(row).data();
-  copy_candidate_data(data, newdata);
-  tab.row(row).data(data);
-  $('.imodes', row).val(newdata[6]);
-  $('.isubjects', row).val(newdata[7]);
-}
-
-function get_candidate_data(tab, row) {
-  var data = tab.row(row).data();
-  var out = copy(data); // need to make sure we deep-copy the data
-  out[6] = $('.imodes', row).val();
-  out[7] = $('.isubjects', row).val();
-  console.log('get_candidate_data:  mode=' + out[6] + " subject=" + out[7]);
-  return out;
-}
-
-// get candidate from a row into a transferable form
-function get_candidate_data(tab, row) {
-  var row = tab.row(row);
-  var cdata = copy(tab.row(row).columns('.c-data').data());
-  cdata['m'] = $('.imodes', row).val();
-  cdata['s'] = $('.isubjects', row).val();
-  console.log('get_candidate_data');
-  console.log(cdata);
-  return cdata;
-}
-
 function set_candidate_data(tab, row, data) {
 }
 
@@ -291,45 +258,55 @@ function rotate_candidates() {
   if (checked.length < 2) return;
   var tab = $('#slots').DataTable();
   var pks2 = tab.cells(checked, '.pk-value').data();
-  console.log('pks2');
-  console.log(pks2);
+
+  // preserve input states
+  var state = [];
+  checked.each(function(i, e) {
+    var rs = [];
+    rs[0] = $('.rsel', e).prop('checked');
+    rs[1] = $('.dtpicker', e).prop('value');
+    rs[2] = $('.change-duration', e).prop('value');
+    rs[3] = $('.imodes', e).val();
+    rs[4] = $('.isubjects', e).val();
+    //console.log(rs);
+    state[i] = rs;
+  });
 
   // for some reason, the below still clears all the inputs,
   // and then the datetimepickers disappear,
   // indicating that they've been detached as well
-  for (var ic = 8; ic <= 8; ++ic) {
+  for (var ic = 8; ic <= 12; ++ic) {
     var cdata = tab.cells(checked, ic).data();
     checked.each(function(i) {
       tab.cell($(this), ic).data(cdata[(i == 0 ? cdata.length : i) - 1]);
     });
   }
-  tab.draw();
-}
-// note:  datetimepicker elements labelled by pk.
-// do we need to rotate these as well?
-// (shouldn't be, but this way of doing it may require it to be so)
 
-// may need a button for rotating up.  This rotates down.
-function rotate_selection() {
-  var checked = $('.rsel:checked');
-  if (checked.length < 2) return;
-  var tab = $('#slots').DataTable();
-  var olddata = [];
-  var notfirst = false;
+  // restore input states and datetimepickers
   checked.each(function(i, e) {
-    // rows come out in order
-    var row = $(this).parents('tr');
-    //var tr = tab.row(row);
-    var data = get_candidate_data(tab, row); // deep copy
-    if (notfirst) copy_candidate_row(tab, row, olddata);
-    notfirst = true;
-    olddata = data;
+    $('.rsel', e).prop('checked', state[i][0]);
+    $('.dtpicker', e).prop('value', state[i][1]);
+    $('.change-duration', e).prop('value', state[i][2]);
+
+    var isrc = (i == 0 ? cdata.length : i) - 1;
+    $('.imodes', e).val(state[isrc][3]);
+    $('.isubjects', e).val(state[isrc][4]);
+
+    //console.log("start date " + state[i][1] + " length " + state[i][1].length);
+    //var sd = state[i][1].length > 0 ? state[i][1] : "2015/12/14";
+    //console.log("start date " + sd);
+    // ideally we'd like to set start date to current date, but above logic doesn't seem to work
+    var nm = "#datetimepicker" + i;
+    console.log(nm);
+    $(nm).datetimepicker({
+      minDate: "2015/12/01",
+      maxDate: "2015/12/17",
+      startDate: "2015/12/14",
+    });
   });
-  var row = checked.eq(0).parents('tr');
-  copy_candidate_row(tab, row, olddata);
 }
 
-function shuffle_selection() {
+function shuffle_candidates() {
 }
 
 function render_rselection(data, type, row, meta) {
@@ -342,7 +319,7 @@ function render_rselection(data, type, row, meta) {
 
 function render_change_start(data, type, row, meta) {
   if (type == "display") {
-    return '<input id="datetimepicker' + row[12] + '" type="text">';
+    return '<input id="datetimepicker' + meta.row + '" class="dtpicker" type="text">';
   } else {
     return data;
   }
@@ -507,16 +484,6 @@ $(document).ready(function() {
   };
   table = $('#slots').DataTable(spec);
 
-  $.each(students, function(pk, s) {
-    var nm = "#datetimepicker" + pk;
-    $(nm).datetimepicker({
-      minDate: "2015/12/01",
-      maxDate: "2015/12/17",
-      startDate: "2015/12/14",
-      defaultTime: "14:00"
-    });
-  });
-
   $('#slots tbody').on('click', 'td.comments-detail', function() {
     var tr = $(this).closest('tr');
     var row = table.row(tr);
@@ -536,6 +503,18 @@ $(document).ready(function() {
     // This introduces some weird behavior, but at least
     // the visual style of a selected row does reflect the selection state.
   //});
+
+  //$.each(students, function(pk, s));
+  table.$('.datetimepickers').each(function(i) {
+    //console.log('datetimepicker ' + i);
+    var nm = "#datetimepicker" + i;
+    $(nm).datetimepicker({
+      minDate: "2015/12/01",
+      maxDate: "2015/12/17",
+      startDate: "2015/12/14",
+      defaultTime: "14:00"
+    });
+  });
 
 /*
   // insert initial changeable states
@@ -570,7 +549,7 @@ $(document).ready(function() {
       }
     }
     // also initialize datetimepickers
-    var nm = "#datetimepicker" + pk;
+    var nm = "#datetimepicker" + i;
     $(nm).datetimepicker({
       minDate: "2015/12/01",
       maxDate: "2015/12/17",
