@@ -62,22 +62,23 @@ input.change-duration { width: 3em }
 <tr>
   <td>Interview duration</td>
   <td><input type="number" name="interviewduration" style="width:5em"></td>
-  <td><button type='button' id='rotatebutton' onclick='rotate_candidates()'>Rotate selected</button</td>
+  <td><button type='button' id='rotatebutton' onclick='rotate_candidates_up()'>Rotate selected up</button</td>
   <td><button type='button' id='physicsbutton' onclick='set_physics()'>Physics interviews</button></td>
 </tr>
 <tr>
   <td>Break duration</td>
   <td><input type="number" name="breakduration" style="width:5em"></td>
-  <td><button type='button' id='shufflebutton' onclick='shuffle_candidates()'>Shuffle selected</button</td>
+  <td><button type='button' id='rotatebutton' onclick='rotate_candidates_down()'>Rotate selected down</button</td>
   <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
 </tr>
 <tr>
-  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear</button></td>
-  <td><button type='button' id='recalcbutton'>Recalculate</button></td>
+  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear blanks</button></td>
+  <td><button type='button' id='recalcbutton'>Recalculate schedule</button></td>
+  <td><button type='button' id='shufflebutton' onclick='shuffle_candidates()'>Shuffle selected</button</td>
   <td><button type='button' id='reversebutton' onclick='reverse_selection()'>Reverse selection</button></td>
-  <td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
 </tr>
 </table>
+<button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button>
 </p>
 
 <p>To leave schedule unchanged, leave this page without saving.</p>
@@ -250,63 +251,89 @@ function copy(o) {
    return out;
 }
 
-function set_candidate_data(tab, row, data) {
+function get_candidate_data(tab, rows) {
+  rs = [];
+  rows.each(function(i, e) {
+    var r = tab.row(e);
+    var data = r.data();
+    var d = [];
+    for (var ic = 8; ic <= 12; ++ic) d[ic] = data[ic];
+    d[0] = $('.rsel', e).prop('checked');
+    d[1] = $('.dtpicker', e).prop('value');
+    d[2] = $('.change-duration', e).prop('value');
+    d[3] = $('.imodes', e).val();
+    d[4] = $('.isubjects', e).val();
+    d[5] = $('.dtpicker', e).attr('id');
+    rs[i] = d;
+    //console.log("get candidate data for row " + i);
+  });
+  return rs;
 }
 
-function rotate_candidates() {
+function set_candidate_data(tab, rows, data, map) {
+  rows.each(function(i, e) {
+    var r = tab.row(e);
+    for (var ic = 8; ic <= 12; ++ic) tab.cell(r, ic).data(data[map[i]][ic]);
+    $('.imodes', e).val(data[map[i]][3]);
+    $('.isubjects', e).val(data[map[i]][4]);
+    $('.rsel', e).prop('checked', data[i][0]);
+    //$('.dtpicker', e).prop('value', data[i][1]);
+    $('.change-duration', e).prop('value', data[i][2]);
+    var spec = { minDate: "2015/12/01", maxDate: "2015/12/17" };
+    if (data[i][1].length > 0) spec["value"] = data[i][1];
+    else spec["startDate"] = "2015/12/14";
+    $('#'+data[i][5]).datetimepicker(spec);
+  });
+}
+
+function rotate_candidates_up() {
   var checked = $('.rsel:checked').parents('tr');
   if (checked.length < 2) return;
   var tab = $('#slots').DataTable();
-  var pks2 = tab.cells(checked, '.pk-value').data();
-
-  // preserve input states
-  var state = [];
-  checked.each(function(i, e) {
-    var rs = [];
-    rs[0] = $('.rsel', e).prop('checked');
-    rs[1] = $('.dtpicker', e).prop('value');
-    rs[2] = $('.change-duration', e).prop('value');
-    rs[3] = $('.imodes', e).val();
-    rs[4] = $('.isubjects', e).val();
-    //console.log(rs);
-    state[i] = rs;
-  });
-
-  // for some reason, the below still clears all the inputs,
-  // and then the datetimepickers disappear,
-  // indicating that they've been detached as well
-  for (var ic = 8; ic <= 12; ++ic) {
-    var cdata = tab.cells(checked, ic).data();
-    checked.each(function(i) {
-      tab.cell($(this), ic).data(cdata[(i == 0 ? cdata.length : i) - 1]);
-    });
-  }
-
-  // restore input states and datetimepickers
-  checked.each(function(i, e) {
-    $('.rsel', e).prop('checked', state[i][0]);
-    $('.dtpicker', e).prop('value', state[i][1]);
-    $('.change-duration', e).prop('value', state[i][2]);
-
-    var isrc = (i == 0 ? cdata.length : i) - 1;
-    $('.imodes', e).val(state[isrc][3]);
-    $('.isubjects', e).val(state[isrc][4]);
-
-    //console.log("start date " + state[i][1] + " length " + state[i][1].length);
-    //var sd = state[i][1].length > 0 ? state[i][1] : "2015/12/14";
-    //console.log("start date " + sd);
-    // ideally we'd like to set start date to current date, but above logic doesn't seem to work
-    var nm = "#datetimepicker" + i;
-    console.log(nm);
-    $(nm).datetimepicker({
-      minDate: "2015/12/01",
-      maxDate: "2015/12/17",
-      startDate: "2015/12/14",
-    });
-  });
+  rs = get_candidate_data(tab, checked);
+  map = [];
+  map[0] = checked.length - 1;
+  for (var i = 0; i < checked.length - 1; ++i) map.push(i);
+  set_candidate_data(tab, checked, rs, map);
 }
 
+function rotate_candidates_down() {
+  var checked = $('.rsel:checked').parents('tr');
+  if (checked.length < 2) return;
+  var tab = $('#slots').DataTable();
+  rs = get_candidate_data(tab, checked);
+  map = [];
+  for (var i = 1; i < checked.length; ++i) map.push(i);
+  map[checked.length - 1] = 0;
+  set_candidate_data(tab, checked, rs, map);
+}
+
+/**
+ * Randomize array element order in-place.
+ * Using Durstenfeld shuffle algorithm.
+ * (from http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array)
+ */
+function shuffleArray(array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+  return array;
+}
+
+// problem:  shuffles among all.
 function shuffle_candidates() {
+  var checked = $('.rsel:checked').parents('tr');
+  if (checked.length < 2) return;
+  var tab = $('#slots').DataTable();
+  rs = get_candidate_data(tab, checked);
+  // shuffle
+  map = [];
+  for (var i = checked.length - 1; i >= 0; --i) map[i] = i;
+  shuffleArray(map);
+  set_candidate_data(tab, checked, rs, map);
 }
 
 function render_rselection(data, type, row, meta) {
@@ -504,15 +531,18 @@ $(document).ready(function() {
     // the visual style of a selected row does reflect the selection state.
   //});
 
-  //$.each(students, function(pk, s));
+  // start date is set here.  Rotation/shuffle changes from start date
+  // to value, which is a change in behavior.
   table.$('.datetimepickers').each(function(i) {
     //console.log('datetimepicker ' + i);
     var nm = "#datetimepicker" + i;
     $(nm).datetimepicker({
       minDate: "2015/12/01",
       maxDate: "2015/12/17",
+      //defaultDate: "2015/12/14",
+      //defaultTime: "14:00",
       startDate: "2015/12/14",
-      defaultTime: "14:00"
+      //defaultTime: "14:00"
     });
   });
 
