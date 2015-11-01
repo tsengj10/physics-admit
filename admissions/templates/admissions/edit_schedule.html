@@ -9,14 +9,14 @@ Admissions database - {{ team.college.name }} schedule editor
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/media/css/jquery.dataTables.min.css" %}'>
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColVis/css/dataTables.colVis.min.css" %}'>
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/TableTools/css/dataTables.tableTools.min.css" %}'>
-<link rel="stylesheet" type="text/css" href='{% static "js/datetimepicker-master/jquery.datetimepicker.css" %}'/ >
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
-<!--script src='{% static "js/datetimepicker-master/jquery.js" %}'></script-->
 <script src='{% static "js/DataTables-1.10.2/media/js/jquery.dataTables.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
 <script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
-<script src='{% static "js/datetimepicker-master/build/jquery.datetimepicker.full.min.js" %}'></script>
+  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
 <style>
 table#teamspec { font-size: 16px; text-align: left }
 
@@ -28,6 +28,10 @@ td.comments-detail {
 .comments { text-align: left }
 
 input.change-duration { width: 3em }
+
+input.change-start { width: 4em }
+
+input.dpicker { width: 6em }
 
 </style>
 {% endblock %}
@@ -54,55 +58,73 @@ input.change-duration { width: 3em }
 <p>
 <table cellspacing="0" cellpadding="3" border="1">
 <tr>
+  <th>Selections</th>
+  <th>Schedule Actions</th>
+  <th>Candidate Actions</th>
+</tr>
+<tr>
+  <td><button type='button' id='physicsbutton' onclick='set_physics()'>Physics interviews</button></td>
+  <td><button type='button' id='clearbutton' onclick='clear_schedule()'>Clear schedule</button></td>
+  <td><button type='button' id='rotatebutton' onclick='rotate_candidates_up()'>Rotate selected up</button</td>
+</tr>
+<tr>
+  <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
+  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear inputs</button></td>
+  <td><button type='button' id='rotatebutton' onclick='rotate_candidates_down()'>Rotate selected down</button</td>
+</tr>
+<tr>
+  <td><button type='button' id='reversebutton' onclick='reverse_selection()'>Reverse selection</button></td>
+  <td><button type='button' id='clearbutton' onclick='infer_blanks()'>Infer inputs</button></td>
+  <td><button type='button' id='shufflebutton' onclick='shuffle_candidates()'>Shuffle selected</button</td>
+</tr>
+<tr>
+  <td></td>
+  <td><button type='button' id='recalcbutton'>Recalculate schedule</button></td>
+  <td><button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button></td>
+</tr>
+</table>
+</p>
+
+<p>To leave schedule unchanged, leave this page without saving.</p>
+
+<p>
+<table cellspacing="0" cellpadding="3" border="1">
+<tr>
   <th>Schedule Defaults</th>
   <th>(minutes)</th>
-  <th>Candidate Actions</th>
-  <th>Course Actions</th>
 </tr>
 <tr>
   <td>Interview duration</td>
   <td><input type="number" name="interviewduration" style="width:5em"></td>
-  <td><button type='button' id='rotatebutton' onclick='rotate_candidates_up()'>Rotate selected up</button</td>
-  <td><button type='button' id='physicsbutton' onclick='set_physics()'>Physics interviews</button></td>
 </tr>
 <tr>
   <td>Break duration</td>
   <td><input type="number" name="breakduration" style="width:5em"></td>
-  <td><button type='button' id='rotatebutton' onclick='rotate_candidates_down()'>Rotate selected down</button</td>
-  <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
-</tr>
-<tr>
-  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear blanks</button></td>
-  <td><button type='button' id='recalcbutton'>Recalculate schedule</button></td>
-  <td><button type='button' id='shufflebutton' onclick='shuffle_candidates()'>Shuffle selected</button</td>
-  <td><button type='button' id='reversebutton' onclick='reverse_selection()'>Reverse selection</button></td>
 </tr>
 </table>
-<button type='button' id='savebutton' class='statebutton' disabled=true>Save schedule</button>
 </p>
-
-<p>To leave schedule unchanged, leave this page without saving.</p>
 
 <p>
 <table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
 <thead>
   <tr>
     <th></th>
-    <th colspan="2" align="left">Change</th>
-    <th colspan="3" align="left">Current schedule</th>
-    <th colspan="6" align="left">Candidate</th>
+    <th colspan="3" align="left">Change</th>
+    <th colspan="2" align="left">Current schedule</th>
+    <th colspan="7" align="left">Candidate</th>
     <th></th>
   </tr>
   <tr>
     <th><input type='checkbox' id='arsel' onchange='all_select()'></th>
-    <th>Start</th>
-    <th>Duration</th>
     <th>Date</th>
+    <th>Time</th>
+    <th>Duration</th>
     <th>Start</th>
-    <th>End time</th>
+    <th>End</th>
     <th>Type</th>
     <th>Subject</th>
     <th>Course</th>
+    <th>Col1</th>
     <th>Name</th>
     <th>Notes</th>
     <th>Other interviews</th>
@@ -112,14 +134,15 @@ input.change-duration { width: 3em }
 <tfoot>
   <tr>
     <th></th>
-    <th>Start</th>
-    <th>Duration</th>
     <th>Date</th>
+    <th>Time</th>
+    <th>Duration</th>
     <th>Start</th>
-    <th>End time</th>
+    <th>End</th>
     <th>Type</th>
     <th>Subject</th>
     <th>Course</th>
+    <th>Col1</th>
     <th>Name</th>
     <th>Notes</th>
     <th>Other interviews</th>
@@ -142,6 +165,7 @@ var students = {};
 students[{{ student.pk }}] = {
   "n": "{{ student.info.surname }}, {{ student.info.forenames }}",
   "course": "{{ student.course_type }}",
+  "col1": "{{ student.college1.adss_code }}",
   "other": [],
   "spec": "{{ student.info.has_special_needs }}",
   "dcode": "{{ student.info.disability_code }}",
@@ -174,6 +198,8 @@ students[{{ slot.candidate.pk }}]["other"].push({
 {% endfor %}
 
 var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+var PKI = 13; // last column number
 
 function twoDigit(n) {
   var s = (n < 10 ? "0" : "");
@@ -236,9 +262,29 @@ function set_philosophy() {
   enable_save();
 }
 
+function clear_schedule() {
+  var checked = $('.rsel:checked').parents('tr');
+  var tab = $('#slots').DataTable();
+  rs = get_candidate_data(tab, checked);
+  checked.each(function(i, e) {
+    var r = tab.row(e);
+    tab.cell(r, 4).data("");
+    tab.cell(r, 5).data("");
+  });
+  map = [];
+  for (var i = 0; i < checked.length; ++i) map.push(i);
+  set_candidate_data(tab, checked, rs, map);
+  enable_save();
+}
+
 function clear_blanks() {
-  var t = $('#slots');
-  $('[type=text],[type=number]', t).val("");
+  $('.rsel:checked').parents('tr')
+                    .children('td')
+                    .children('[type=text],[type=number]')
+                    .val("");
+}
+
+function infer_blanks() {
 }
 
 function copy(o) {
@@ -257,13 +303,14 @@ function get_candidate_data(tab, rows) {
     var r = tab.row(e);
     var data = r.data();
     var d = [];
-    for (var ic = 8; ic <= 12; ++ic) d[ic] = data[ic];
+    for (var ic = 8; ic <= PKI; ++ic) d[ic] = data[ic];
     d[0] = $('.rsel', e).prop('checked');
-    d[1] = $('.dtpicker', e).prop('value');
+    d[1] = $('.dpicker', e).prop('value');
+    d[PKI+1] = $('.change-start', e).prop('value');
     d[2] = $('.change-duration', e).prop('value');
     d[3] = $('.imodes', e).val();
     d[4] = $('.isubjects', e).val();
-    d[5] = $('.dtpicker', e).attr('id');
+    d[5] = $('.dpicker', e).attr('id');
     rs[i] = d;
     //console.log("get candidate data for row " + i);
   });
@@ -273,16 +320,14 @@ function get_candidate_data(tab, rows) {
 function set_candidate_data(tab, rows, data, map) {
   rows.each(function(i, e) {
     var r = tab.row(e);
-    for (var ic = 8; ic <= 12; ++ic) tab.cell(r, ic).data(data[map[i]][ic]);
+    for (var ic = 8; ic <= PKI; ++ic) tab.cell(r, ic).data(data[map[i]][ic]);
     $('.imodes', e).val(data[map[i]][3]);
     $('.isubjects', e).val(data[map[i]][4]);
     $('.rsel', e).prop('checked', data[i][0]);
-    //$('.dtpicker', e).prop('value', data[i][1]);
+    $('.dpicker', e).prop('value', data[i][1]);
+    $('.change-start', e).prop('value', data[i][PKI+1]);
     $('.change-duration', e).prop('value', data[i][2]);
-    var spec = { minDate: "2015/12/01", maxDate: "2015/12/17" };
-    if (data[i][1].length > 0) spec["value"] = data[i][1];
-    else spec["startDate"] = "2015/12/14";
-    $('#'+data[i][5]).datetimepicker(spec);
+    $('#'+data[i][5]).datepicker();
   });
 }
 
@@ -336,6 +381,16 @@ function shuffle_candidates() {
   set_candidate_data(tab, checked, rs, map);
 }
 
+//
+// datepicker ui
+//
+
+$.datepicker.setDefaults({
+  "dateFormat": "dd/mm/yy",
+  "minDate": new Date(2015, 11, 1), // 1 Dec
+  "maxDate": new Date(2015, 11, 17), // 17 Dec
+});
+
 function render_rselection(data, type, row, meta) {
   if (type = "display") {
     return '<input type="checkbox" class="rsel">';
@@ -344,9 +399,17 @@ function render_rselection(data, type, row, meta) {
   }
 }
 
+function render_change_date(data, type, row, meta) {
+  if (type == "display") {
+    return '<input id="datepicker' + meta.row + '" class="dpicker" type="text">';
+  } else {
+    return data;
+  }
+}
+
 function render_change_start(data, type, row, meta) {
   if (type == "display") {
-    return '<input id="datetimepicker' + meta.row + '" class="dtpicker" type="text">';
+    return '<input type="text" class="change-start">';
   } else {
     return data;
   }
@@ -438,9 +501,9 @@ var dataset = [];
 $.each(students, function(pk, v) {
   var fields = [];
   fields[0] = ""; // row selector checkboxes
-  fields[1] = ""; // start time selector
-  fields[2] = ""; // duration selector
-  fields[3] = ""; // empty date
+  fields[1] = ""; // start date selector
+  fields[2] = ""; // start time selector
+  fields[3] = ""; // duration selector
   fields[4] = ""; // empty start time
   fields[5] = ""; // empty end time
   fields[6] = ""; // mode / interview type
@@ -454,8 +517,9 @@ $.each(students, function(pk, v) {
     fields[7] = v.s.subject == 'physics' ? '1' : '2'; // should be a selector
   }
   fields[8] = v.course;
-  fields[9] = v.n;
-  fields[10] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes
+  fields[9] = v.col1;
+  fields[10] = v.n;
+  fields[11] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes
   // other interviews in v.other
   var s = [];
   for (var i = 0; i < v.other.length; ++i) {
@@ -464,8 +528,8 @@ $.each(students, function(pk, v) {
     s.push((u.mode != "local" ? "("+u.mode+") " : " ") +
            u.tcol + " " + formatDate(a) + " " + formatTime(a));
   }
-  fields[11] = s.join('; ');
-  fields[12] = pk;
+  fields[12] = s.join('; ');
+  fields[13] = pk;
   //console.log(fields);
   dataset.push(fields);
 });
@@ -475,18 +539,19 @@ $(document).ready(function() {
 
   // dom:  T for TableTools, and C... for ColVis
   var spec = {
-    dom: 'T<"clear">lfrtip', // add an R to use colReorder
+    //dom: 'T<"clear">lfrtip', // add an R to use colReorder
     data: dataset,
     columns: [
       { name: "rselection", orderable: false, "render": render_rselection }, // row selection checkboxes
-      { name: "changestart", orderable: false, "class": "datetimepickers", "render": render_change_start },
+      { name: "changedate", orderable: false, "class": "datepickers", "render": render_change_date },
+      { name: "changestart", orderable: false, "render": render_change_start },
       { name: "changeduration", orderable: false, "render": render_change_duration },
-      { name: "date", visible: false }, // spare
       { name: "start", "render": render_start },
       { name: "end", "render": render_end },
-      { name: "mode", "class": "mode-selector c-data", "render": render_mode },
-      { name: "subject", "class": "subject-selector c-data", "render": render_subject },
+      { name: "mode", orderable: false, "class": "mode-selector c-data", "render": render_mode },
+      { name: "subject", orderable: false, "class": "subject-selector c-data", "render": render_subject },
       { name: "course", "class": "course-type c-data" },
+      { name: "col1", "class": "c-data" },
       { name: "name", "class": "c-data" },
       { name: "notes", "class": "comments-detail c-data" },
       { name: "other", "class": "c-data" },
@@ -518,7 +583,7 @@ $(document).ready(function() {
       row.child.hide();
       //tr.removeClass('shown-comments');
     } else {
-      var child = row.child(format_comments(row.data()[12], row.index()) );
+      var child = row.child(format_comments(row.data()[PKI], row.index()) );
       child.show();
       //tr.addClass('shown-comments');
     }
@@ -533,17 +598,9 @@ $(document).ready(function() {
 
   // start date is set here.  Rotation/shuffle changes from start date
   // to value, which is a change in behavior.
-  table.$('.datetimepickers').each(function(i) {
-    //console.log('datetimepicker ' + i);
-    var nm = "#datetimepicker" + i;
-    $(nm).datetimepicker({
-      minDate: "2015/12/01",
-      maxDate: "2015/12/17",
-      //defaultDate: "2015/12/14",
-      //defaultTime: "14:00",
-      startDate: "2015/12/14",
-      //defaultTime: "14:00"
-    });
+  table.$('.datepickers').each(function(i) {
+    var nm = "#datepicker" + i;
+    $(nm).datepicker();
   });
 
 /*
@@ -578,14 +635,6 @@ $(document).ready(function() {
         $("select", e).val(students[pk].s.subject == 'physics' ? '1' : '2');
       }
     }
-    // also initialize datetimepickers
-    var nm = "#datetimepicker" + i;
-    $(nm).datetimepicker({
-      minDate: "2015/12/01",
-      maxDate: "2015/12/17",
-      startDate: "2015/12/14",
-      defaultTime: "14:00"
-    });
   });
 */
 

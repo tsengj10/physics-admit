@@ -256,8 +256,8 @@ def view_schedule(request, college_code, return_to='admissions:colleges'):
   college = get_object_or_404(College, adss_code=college_code.upper())
   allow_edit = college in get_colleges_for_user(request.user)
   teams = college.interview_team.all()
-  students1 = Candidate.objects.filter(college1=college)
-  students2 = Candidate.objects.filter(college2=college)
+  students1 = Candidate.objects.filter(college1=college, state=Candidate.STATE_SUMMONED)
+  students2 = Candidate.objects.filter(college2=college, state=Candidate.STATE_SUMMONED)
   #s1 = list(students1)
   #s2 = list(students2)
   #logger.info("s1 = {}".format(s1))
@@ -294,7 +294,7 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
   if request.method == 'POST':
     # parse request data
     post_slots(request.body.decode('utf-8'), team)
-    kwargs = { 'college_code': team.college.adss_code }
+    kwargs = { 'college_code': team.college.adss_code.lower() }
     return redirect('admissions:view_schedule', **kwargs)
 
   overallstate = OverallState.objects.current()
@@ -306,7 +306,8 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
     students2 = Candidate.objects.filter(college2=college, state=Candidate.STATE_SUMMONED)
   students = list(students1) + list(students2)
   if len(students) == 0:
-    return redirect('admissions:view_schedule') # no candidates!
+    kwargs = { 'college_code': team.college.adss_code.lower() }
+    return redirect('admissions:view_schedule', **kwargs) # no candidates!
   slots = InterviewSlot.objects.filter(candidate__in=students).prefetch_related(
       'candidate', 'team')
   comments = Comment.objects.filter(candidate__in=students)
