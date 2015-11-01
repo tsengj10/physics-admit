@@ -95,11 +95,11 @@ input.dpicker { width: 6em }
 </tr>
 <tr>
   <td>Interview duration</td>
-  <td><input type="number" name="interviewduration" style="width:5em"></td>
+  <td><input type="number" id="interviewduration" style="width:5em"></td>
 </tr>
 <tr>
   <td>Break duration</td>
-  <td><input type="number" name="breakduration" style="width:5em"></td>
+  <td><input type="number" id="breakduration" style="width:5em"></td>
 </tr>
 </table>
 </p>
@@ -285,6 +285,58 @@ function clear_blanks() {
 }
 
 function infer_blanks() {
+  var checked = $('.rsel:checked').parents('tr');
+  var tab = $('#slots').DataTable();
+  // the following construct gives rows in order
+  var rs = [];
+  var dts = []; // array of durations
+  var dtbs = []; // array of break durations
+  var tlast = 0;
+  var dt0 = 0; // default duration
+  var dtb0 = 0; // default break duration
+  tab.rows(checked).eq(0).sort().each(function(index) {
+    console.log(index);
+    var r = tab.row(index);
+    //console.log(tab.cell(r, 10).data());
+    var t0 = tab.cell(r, 4).data(); // seconds
+    var t1 = tab.cell(r, 5).data();
+    if (t0 != "" && t1 != "") {
+      var dt = t1 - t0;
+      if (dt >= 0 && dt < 7200) dts.push(dt);
+      var dtb = t0 - tlast;
+      if (dtb >= 0 && dtb < 7200) dtbs.push(dtb);
+      var sdt = new Date(t0 * 1000);
+      var rd = [];
+      rd.push(t0);
+      rd.push(t1);
+      rd.push(sdt);
+      rs.push(rd);
+      tlast = t0;
+    } else if (t0 == "" && tlast == 0) {
+      // no starting time - should display a message
+      alert("Need to specify a start date/time.");
+      return false;
+    }
+    if (dts.length > 0) {
+      var im = dts.length / 2;
+      dt0 = dts[im];
+    } else {
+      alert("No typical (<2 hours) interviews defined.");
+      return;
+    }
+    if (dtbs.length > 0) {
+      var imb = dtbs.length / 2;
+      dtb0 = dtbs[imb];
+    } else {
+      dtb0 = 0; // no default break; assume simply not specified
+    }
+    $('#interviewduration').val(dt0);
+    $('#breakduration').val(dtb0);
+  });
+  tab.rows(checked).eq(0).sort().each(function(index) {
+    // recalculate schedule in here.
+    // schedule should start with the first date and time
+  });
 }
 
 function copy(o) {
