@@ -375,40 +375,35 @@ function recalculate() {
   if (default_break == "" || default_break <= 0) default_break = 0;
   var checked = $('.rsel:checked').parents('tr');
   var tab = $('#slots').DataTable();
-  var current_time = new Date(2015, 11, 14, 9, 0, 0, 0);
+  var current_time = new Date(2015, 11, 15, 9, 0, 0, 0);
   var rs = get_candidate_data(tab, checked); // save blanks
-  var first = true;
   tab.rows(checked).eq(0).sort().each(function(index) {
     var r = tab.row(index);
     var e = r.node();
+    // check if we should schedule an interview
+    var mode = $('.imodes', e).val();
+    if (mode == "0") return; // skip if no interview
     // check if first entry has a starting time
     //var dp = $('.dpicker', e).prop('value');
     var dp = $('.dpicker', e).datepicker('getDate');
     var t0 = $('.change-start', e).prop('value');
     var dt = $('.change-duration', e).prop('value');
-    if (first && t0 == "") {
-      console.log("Did not set an initial time.");
-    }
-    first = false;
     if (dp != null) {
       current_time = dp;
-      current_time.setHours(9); // tends to override time set in same row
-    } else {
+      current_time.setHours(9);
+    }
+    if (t0 != "") {
       var saved_time = current_time.getTime();
       current_time = parseTime(t0, current_time);
-      if (isNaN(current_time)) {
-        console.log("Invalid time string " + t0);
-        current_time = new Date(saved_time);
-      }
+      if (isNaN(current_time)) current_time = new Date(saved_time);
     }
     if (dt == "") dt = default_duration;
-    console.log(current_time);
     var stop_time = new Date(current_time.getTime() + dt * 1000 * 60);
     tab.cell(r, 4).data(current_time.getTime() / 1000); // start date/time
     tab.cell(r, 5).data(stop_time.getTime() / 1000); // stop time
     current_time = new Date(stop_time.getTime() + default_break * 1000 * 60);
     // re-attach datepicker
-    $('.dpicker', e).datepicker();
+    //$('.dpicker', e).datepicker();
   });
   map = [];
   for (var i = 0; i < checked.length; ++i) map.push(i);
@@ -417,7 +412,30 @@ function recalculate() {
 }
 
 function save_schedule() {
-  alert("Not implemented yet");
+  var rs = [];
+  var tab = $('#slots').DataTable();
+  tab.rows().eq(0).each(function(index) {
+    var r = tab.row(index);
+    var e = r.node();
+    // mode
+    var mode = $('.imodes', e).val();
+    if (mode == "0") return; // skip if no interview
+    // time
+    var t0 = tab.cell(r, 4).data();
+    var t1 = tab.cell(r, 5).data();
+    if (t0 == "" || t1 == "") return; // skip if no scheduled times
+    var rd = [];
+    rd["datetime"] = t0;
+    rd["duration"] = (t1 - t0) / 60; // minutes
+    rd["mode"] = mode;
+    // subject
+    rd["subject"] = $('.isubjects', e).val();
+    // candidate
+    rd["pk"] = tab.cell(r, PKI).data();
+    // team - implicit in request url
+    rs.push(rd);
+  });
+  console.log(rs);
 }
 
 function copy(o) {
