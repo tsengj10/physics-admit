@@ -324,17 +324,23 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
 def post_slots(body, team):
   # get rid of old slots
   InterviewSlot.objects.filter(team=team).delete()
+  logger.info("old interview slots deleted for team {}".format(team))
+  logger.info(body)
   data = json.loads(body)
   for d in data:
     s = InterviewSlot()
-    s.candidate = Candidate.get(pk=d['cpk'])
-    s.team = team
-    s.subject = InterviewSlot.PHYSICS if d['subject'] == 'P' else InterviewSlot.PHILOSOPHY
-    s.mode = InterviewSlot.LOCAL if d['mode'] == 'L' else InterviewSlot.REMOTE
-    s.time = datetime.fromtimestamp(d['t'])
-    s.length = (d['e'] - d['t']) / 60 # minutes
-    s.save()
+    try:
+      s.candidate = Candidate.objects.get(pk=d['cpk'])
+      s.team = team
+      s.subject = InterviewSlot.PHYSICS if d['subject'] == 'P' else InterviewSlot.PHILOSOPHY
+      s.mode = InterviewSlot.LOCAL if d['mode'] == 'L' else InterviewSlot.REMOTE
+      s.time = datetime.datetime.utcfromtimestamp(d['t']) # TODO timezone?
+      s.length = (d['e'] - d['t']) / 60 # minutes
+      logger.info("new interview slot {}".format(s))
+      s.save()
     # may want to save the new objects in an array and commit in a block with atomic()
+    except ObjectDoesNotExist:
+      logger.error("Illegal interview slot post to student pk = " + d['cpk'])
   return
 
 #===============================================================

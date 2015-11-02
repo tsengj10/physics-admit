@@ -424,18 +424,13 @@ function save_schedule() {
     var t0 = tab.cell(r, 4).data();
     var t1 = tab.cell(r, 5).data();
     if (t0 == "" || t1 == "") return; // skip if no scheduled times
-    var rd = [];
-    rd["datetime"] = t0;
-    rd["duration"] = (t1 - t0) / 60; // minutes
-    rd["mode"] = mode;
-    // subject
-    rd["subject"] = $('.isubjects', e).val();
-    // candidate
-    rd["pk"] = tab.cell(r, PKI).data();
-    // team - implicit in request url
+    var rd = { "t":t0, "e":t1, "mode":mode,
+               "subject": $('.isubjects', e).val(),
+               "cpk": tab.cell(r, PKI).data() };
     rs.push(rd);
   });
-  console.log(rs);
+  console.log(JSON.stringify(rs));
+  $.post("{% url 'admissions:edit_schedule' team_pk=team.pk %}", JSON.stringify(rs));
 }
 
 function copy(o) {
