@@ -27,6 +27,10 @@ td.comments-detail {
   cursor: pointer;
 }
 
+td.clash {
+  color: red;
+}
+
 .comments { text-align: left }
 
 input.change-duration { width: 3em }
@@ -195,6 +199,7 @@ students[{{ slot.candidate.pk }}]["other"].push({
     "tcol": "{{ slot.team.college.adss_code }}",
     "mode": "{{ slot.mode }}",
     "datetime": {{ slot.time|date:"U" }},
+    "duration": {{ slot.length }},
   });
   {% endif %}
 {% endfor %}
@@ -622,6 +627,39 @@ function render_subject(data, type, row, meta) {
   }
 }
 
+function render_other(data, type, row, meta) {
+  if (type === "display") {
+    if (data.length == 0) return "";
+    var s = [];
+    for (var i = 0; i < data.length; ++i) {
+      var u = data[i];
+      var a = new Date(u.datetime * 1000);
+      s.push((u.mode != "local" ? "("+u.mode+") " : "") +
+             u.tcol + " " + formatDate(a) + " " + formatTime(a));
+    }
+    return s.join("; ");
+  } else {
+    if (data.length > 0) return data.datetime;
+    else return "";
+  }
+}
+
+function is_clash(a, b, pad) {
+  var t0 = b.datetime - pad * 60;
+  var t1 = b.datetime + (b.duration + pad) * 60;
+  var u0 = a.datetime;
+  var u1 = a.datetime + a.duration * 60;
+  if (u0 >= t0 && u0 < t1) return true;
+  if (u1 >= t0 && u1 < t1) return true;
+  if (u0 < t0 && u1 >= t1) return true;
+  return false;
+}
+
+function any_clash(a, bs, pad) {
+  for (var i = 0; i < bs.length; ++i) if (is_clash(a, bs[i], pad)) return true;
+  return false;
+}
+
 function enable_save() {
   $('.statebutton').removeAttr('disabled');
 }
@@ -672,14 +710,16 @@ $.each(students, function(pk, v) {
   fields[10] = v.n;
   fields[11] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes
   // other interviews in v.other
-  var s = [];
-  for (var i = 0; i < v.other.length; ++i) {
-    var u = v.other[i];
-    var a = new Date(u.datetime * 1000);
-    s.push((u.mode != "local" ? "("+u.mode+") " : " ") +
-           u.tcol + " " + formatDate(a) + " " + formatTime(a));
-  }
-  fields[12] = s.join('; ');
+  //var s = [];
+  //for (var i = 0; i < v.other.length; ++i) {
+  //  var u = v.other[i];
+  //  var a = new Date(u.datetime * 1000);
+  //  s.push((u.mode != "local" ? "("+u.mode+") " : " ") +
+  //         u.tcol + " " + formatDate(a) + " " + formatTime(a));
+  //}
+  //fields[12] = s.join('; ');
+  fields[12] = (v['other'] != undefined) ? v.other : [];
+  //console.log(fields[12]);
   fields[13] = pk;
   //console.log(fields);
   dataset.push(fields);
@@ -687,6 +727,8 @@ $.each(students, function(pk, v) {
 //console.log(dataset);
 
 $(document).ready(function() {
+
+  //console.log(dataset);
 
   // dom:  T for TableTools, and C... for ColVis
   var spec = {
@@ -705,24 +747,11 @@ $(document).ready(function() {
       { name: "col1", "class": "c-data" },
       { name: "name", "class": "c-data" },
       { name: "notes", "class": "comments-detail c-data" },
-      { name: "other", "class": "c-data" },
+      { name: "other", "render": render_other, "class": "c-data", "defaultContent": "None" },
       { name: "pk", "class": "pk-value c-data", visible: false },
     ],
-    "pageLength": 50,
     "order": [ [ 4, "asc" ] ],
     "statesave": true,
-    "tableTools": {
-      "aButtons": [
-        "copy",
-        "csv",
-        {
-          "sExtends": "pdf",
-          "sPdfOrientation": "portrait"
-        },
-        "print"
-      ],
-      "sSwfPath": '{% static "js/DataTables-1.10.2/extensions/TableTools/swf/copy_csv_xls_pdf.swf" %}'
-    },
     "paging": false
   };
   table = $('#slots').DataTable(spec);
