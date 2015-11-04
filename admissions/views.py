@@ -332,7 +332,7 @@ def post_slots(body, team):
     try:
       s.candidate = Candidate.objects.get(pk=d['cpk'])
       s.team = team
-      s.subject = InterviewSlot.PHYSICS if d['subject'] == 'P' else InterviewSlot.PHILOSOPHY
+      s.subject = InterviewSlot.PHYSICS if d['subject'] == '1' else InterviewSlot.PHILOSOPHY
       s.mode = InterviewSlot.LOCAL if d['mode'] == 'L' else InterviewSlot.REMOTE
       s.time = datetime.datetime.utcfromtimestamp(d['t']) # TODO timezone?
       s.length = (d['e'] - d['t']) / 60 # minutes

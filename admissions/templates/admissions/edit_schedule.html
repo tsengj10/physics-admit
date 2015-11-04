@@ -9,13 +9,15 @@ Admissions database - {{ team.college.name }} schedule editor
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/media/css/jquery.dataTables.min.css" %}'>
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColVis/css/dataTables.colVis.min.css" %}'>
 <link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/TableTools/css/dataTables.tableTools.min.css" %}'>
-  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<!--  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">-->
+<link rel="stylesheet" href='{% static "js/jquery-ui-1.11.4.custom/jquery-ui.min.css" %}'></script>
 <script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/media/js/jquery.dataTables.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
 <script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
-  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<!--  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>-->
+<script src='{% static "js/jquery-ui-1.11.4.custom/jquery-ui.min.js" %}'></script>
 
 <style>
 table#teamspec { font-size: 16px; text-align: left }
@@ -80,7 +82,7 @@ input.dpicker { width: 6em }
 <tr>
   <td></td>
   <td><button type='button' id='recalcbutton' onclick='recalculate()'>Recalculate schedule</button></td>
-  <td><button type='button' id='savebutton' class='statebutton' disabled=true onclick='save_schedule()'>Save schedule</button></td>
+  <td><button type='button' id='savebutton' class='statebutton' disabled=true onclick='save_schedule()'>Save schedule (all)</button></td>
 </tr>
 </table>
 </p>
@@ -373,13 +375,14 @@ function recalculate() {
   }
   var default_break = $('#breakduration').val();
   if (default_break == "" || default_break <= 0) default_break = 0;
-  var checked = $('.rsel:checked').parents('tr');
+  var checked = $('.rsel:checked');
+  var checkedrows = checked.parents('tr');
   var tab = $('#slots').DataTable();
   var current_time = new Date(2015, 11, 15, 9, 0, 0, 0);
-  var rs = get_candidate_data(tab, checked); // save blanks
-  tab.rows(checked).eq(0).sort().each(function(index) {
-    var r = tab.row(index);
-    var e = r.node();
+  var rs = get_candidate_data(tab, checkedrows); // save blanks
+  checked.each(function(i, cb) {
+    var e = $(cb).parents('tr');
+    var r = tab.row(e);
     // check if we should schedule an interview
     var mode = $('.imodes', e).val();
     if (mode == "0") return; // skip if no interview
@@ -406,8 +409,8 @@ function recalculate() {
     //$('.dpicker', e).datepicker();
   });
   map = [];
-  for (var i = 0; i < checked.length; ++i) map.push(i);
-  set_candidate_data(tab, checked, rs, map);
+  for (var i = 0; i < checkedrows.length; ++i) map.push(i);
+  set_candidate_data(tab, checkedrows, rs, map);
   enable_save();
 }
 
@@ -431,6 +434,7 @@ function save_schedule() {
   });
   console.log(JSON.stringify(rs));
   $.post("{% url 'admissions:edit_schedule' team_pk=team.pk %}", JSON.stringify(rs));
+  disable_save();
 }
 
 function copy(o) {
@@ -478,6 +482,7 @@ function set_candidate_data(tab, rows, data, map) {
 }
 
 function rotate_candidates_up() {
+  // for some reason parents() reverses order given by initial selector
   var checked = $('.rsel:checked').parents('tr');
   if (checked.length < 2) return;
   var tab = $('#slots').DataTable();
@@ -734,6 +739,24 @@ $(document).ready(function() {
       //tr.addClass('shown-comments');
     }
   });
+  //.on('click', 'td.subject-selector', function() {
+  //  //console.log($('.isubjects', this).val());
+  //  var rows = [ $(this).closest('tr') ];
+  //  var saved = get_candidate_data(table, rows);
+  //  //table.cell($(this)).data($('.isubjects', this).val());
+  //  saved[0][7] = $('.isubjects', this).val();
+  //  set_candidate_data(table, rows, saved, [0]);
+  //  enable_save();
+  //})
+  //.on('click', 'td.mode-selector', function() {
+  //  //console.log($('.imodes', this).val());
+  //  var rows = [ $(this).closest('tr') ];
+  //  var saved = get_candidate_data(table, rows);
+  //  saved[0][6] = $('.imodes', this).val();
+  //  //table.cell($(this)).data($('.imodes', this).val());
+  //  set_candidate_data(table, rows, saved, [0]);
+  //  enable_save();
+  //});
   //.on('click', 'tr', function() {
   //  $(this).toggleClass('selected');
     // clicking on anything in the row flips the class
