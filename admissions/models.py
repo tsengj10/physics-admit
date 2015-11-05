@@ -334,6 +334,12 @@ class CandidateInfo(models.Model):
     help_text=("True if the applicant is from a statistically "
                "under-represented school (based on admissions vs. results).")
     )
+  offa1 = models.NullBooleanField(
+    default=False,
+    verbose_name="OFFA1",
+    help_text=("True if the applicant is from a school with high attainment "
+               "but limited progression to Oxford.")
+    )
   acorn = models.NullBooleanField(
     verbose_name="ACORN",
     help_text=("True if the applicant's postcode is within ACORN groups "

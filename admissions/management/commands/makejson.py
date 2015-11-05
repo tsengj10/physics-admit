@@ -317,6 +317,7 @@ class Command(BaseCommand):
       "gcse": render_boolean(student.gcse), \
       "alev": render_boolean(student.a_level), \
       "offa": render_boolean(student.offa), \
+      "offa1": render_boolean(student.offa1), \
       "acorn": render_boolean(student.acorn), \
       "polar": render_boolean(student.polar), \
       "access": render_boolean(student.access), \

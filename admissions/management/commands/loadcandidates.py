@@ -90,6 +90,7 @@ class Command(BaseCommand):
                            'overall': toNullBoolean(row[32]),
                            'access': toNullBoolean(row[27]),
                            'offa': toNullBoolean(row[31]),
+                           'offa1': toNullBoolean(row[35]),
                            'acorn': toNullBoolean(row[28]),
                            'polar': toNullBoolean(row[33]),
                            'gcse': toNullBoolean(row[30]),
