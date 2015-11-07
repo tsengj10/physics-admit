@@ -134,8 +134,8 @@ p#messages {
     <th title="First college philosophy interview">i4</th>
     <th title="Second college philosophy interview">i5</th>
     <th title="Number of comments (click to view/add)">&amp;</th>
-    <th title="Jelley score">Jel</th>
-    <th title="Rank">#</th> <!-- left spare -->
+    <th title="Jelley score (local)">Jel</th>
+    <th title="Rank (central)">#</th>
     <!-- Candidate information -->
     <th>Name</th>
     <th>Col1</th>
@@ -188,8 +188,8 @@ p#messages {
     <th title="First college philosophy interview">i4</th>
     <th title="Second college philosophy interview">i5</th>
     <th title="Number of comments (click to view/add)">&amp;</th>
-    <th title="Jelley score">Jel</th>
-    <th title="Rank">#</th>
+    <th title="Jelley score (local)">Jel</th>
+    <th title="Rank (central)">#</th>
     <!-- Candidate information -->
     <th>Name</th>
     <th>Col1</th>
@@ -508,29 +508,33 @@ function renderChangeOffer(data, type, row, meta) {
   return data;
 }
 
-//function renderJelleyScore(data, type, row, meta) {
+function renderJelleyScore(data, type, row, meta) {
   //console.log("row[pp] = " + row["pp"]);
   //console.log("row[i1] = " + row["i1"]);
   //console.log("row[i2] = " + row["i2"]);
   //console.log("row[i3] = " + row["i3"]);
-//  var WPATM = parseFloat($("input[name='wpm']").val());
-//  var WPATP = parseFloat($("input[name='wpp']").val());
-//  var WINT1 = parseFloat($("input[name='wi1']").val());
-//  var WINT2 = parseFloat($("input[name='wi2']").val());
-//  console.log("weights " + WPATM + " " + WPATP + " " + WINT1 + " " + WINT2);
-//  var pm = 0.0;
-//  var pp = 0.0;
-//  var i1 = 0.0;
-//  var i2 = 0.0;
-//  var i3 = 0.0;
-//  if ("pm" in row && row["pm"].length > 0) pm = parseFloat(row["pm"]);
-//  if ("pp" in row && row["pp"].length > 0) pp = parseFloat(row["pp"]);
-//  if ("i1" in row && row["i1"].length > 0) i1 = parseFloat(row["i1"]);
-//  if ("i2" in row && row["i2"].length > 0) i2 = parseFloat(row["i2"]);
-//  if ("i3" in row && row["i3"].length > 0) i3 = parseFloat(row["i3"]);
-//  var js = WPATM*pm + WPATP*pp + WINT1*(i1 + i2) + WINT2*i3;
-//  return js.toFixed(1).toString();
-//}
+  var s = $("input[name='wpm']").val();
+  var WPATM = s.length > 0 ? parseFloat(s) : {{ weights.pat_maths }};
+  s = $("input[name='wpp']").val();
+  var WPATP = s.length > 0 ? parseFloat(s) : {{ weights.pat_physics }};
+  s = $("input[name='wi1']").val();
+  var WINT1 = s.length > 0 ? parseFloat(s) : {{ weights.interview1 }};
+  s = $("input[name='wi2']").val();
+  var WINT2 = s.length > 0 ? parseFloat(s) : {{ weights.interview2 }};
+  //console.log("weights " + WPATM + " " + WPATP + " " + WINT1 + " " + WINT2);
+  var pm = 0.0;
+  var pp = 0.0;
+  var i1 = 0.0;
+  var i2 = 0.0;
+  var i3 = 0.0;
+  if ("pm" in row && row["pm"].length > 0) pm = parseFloat(row["pm"]);
+  if ("pp" in row && row["pp"].length > 0) pp = parseFloat(row["pp"]);
+  if ("i1" in row && row["i1"].length > 0) i1 = parseFloat(row["i1"]);
+  if ("i2" in row && row["i2"].length > 0) i2 = parseFloat(row["i2"]);
+  if ("i3" in row && row["i3"].length > 0) i3 = parseFloat(row["i3"]);
+  var js = WPATM*pm + WPATP*pp + WINT1*(i1 + i2) + WINT2*i3;
+  return js.toFixed(1).toString();
+}
 
 function renderName(data, type, row, meta) {
   if (type == "display") {
@@ -633,8 +637,7 @@ $(document).ready(function() {
       { "data": "i4", "name": "i4", "type": "num", "class": "stateinfo", "visible": false },
       { "data": "i5", "name": "i5", "type": "num", "class": "stateinfo", "visible": false },
       { "data": "cmts", "name": "nc", "type": "num", "defaultContent": '0', "class": "comments-detail", "render": renderCommentCount },
-      //{ "data": null, "type": "num", "render": renderJelleyScore }, // was js column
-      { "data": "js", "type": "num", "name": "js" }, // js column - now filled by refilljelley
+      { "data": null, "type": "num", "render": renderJelleyScore, "class": "jelley" }, // was js column
       { "data": "rank", "type": "num" },
       { "data": "name", "render": renderName },
       { "data": "c1", "name": "col1" },
@@ -950,35 +953,7 @@ $(document).ready(function() {
   }
 
   function refilljelley() {
-    var s = $("input[name='wpm']").val();
-    var WPATM = s.length > 0 ? parseFloat(s) : {{ weights.pat_maths }};
-    s = $("input[name='wpp']").val();
-    var WPATP = s.length > 0 ? parseFloat(s) : {{ weights.pat_physics }};
-    s = $("input[name='wi1']").val();
-    var WINT1 = s.length > 0 ? parseFloat(s) : {{ weights.interview1 }};
-    s = $("input[name='wi2']").val();
-    var WINT2 = s.length > 0 ? parseFloat(s) : {{ weights.interview2 }};
-    //console.log("refilljelley:  weights " + WPATM + " " + WPATP + " " + WINT1 + " " + WINT2);
-    var ijs = table.column('js:name').index();
-    //console.log("index for js is " + ijs);
-    table.rows().eq(0).each(function(index) {
-      var d = table.row(index).data();
-      var pm = 0.0;
-      var pp = 0.0;
-      var i1 = 0.0;
-      var i2 = 0.0;
-      var i3 = 0.0;
-      if ("pm" in d && d["pm"].length > 0) pm = parseFloat(d["pm"]);
-      if ("pp" in d && d["pp"].length > 0) pp = parseFloat(d["pp"]);
-      if ("i1" in d && d["i1"].length > 0) i1 = parseFloat(d["i1"]);
-      if ("i2" in d && d["i2"].length > 0) i2 = parseFloat(d["i2"]);
-      if ("i3" in d && d["i3"].length > 0) i3 = parseFloat(d["i3"]);
-      var js = WPATM*pm + WPATP*pp + WINT1*(i1 + i2) + WINT2*i3;
-      d["js"] = js.toFixed(1).toString();
-      //console.log("pm = " + pm + " i1 = " + i1 + " jelley score = " + d["js"]);
-      table.row(index).data(d);
-    });
-    //console.log("refilljelley:  done with loop");
+    table.cells('.jelley').invalidate();
     table.draw(false);
   }
 

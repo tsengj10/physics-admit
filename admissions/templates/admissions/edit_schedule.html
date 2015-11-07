@@ -384,6 +384,8 @@ function recalculate() {
   var checkedrows = checked.parents('tr');
   var tab = $('#slots').DataTable();
   var current_time = new Date(2015, 11, 15, 9, 0, 0, 0);
+  var early_time = new Date(2015, 11, 15, 9, 0, 0, 0); // really just want time
+  var set_early_time = true;
   var rs = get_candidate_data(tab, checkedrows); // save blanks
   checked.each(function(i, cb) {
     var e = $(cb).parents('tr');
@@ -396,9 +398,15 @@ function recalculate() {
     var dp = $('.dpicker', e).datepicker('getDate');
     var t0 = $('.change-start', e).prop('value');
     var dt = $('.change-duration', e).prop('value');
-    if (dp != null) {
+    if (dp != null && (dp.getDate() != current_time.getDate() ||
+                       dp.getMonth() != current_time.getMonth() ||
+                       dp.getFullYear() != current_time.getFullYear())) {
       current_time = dp;
-      current_time.setHours(9);
+      current_time.setHours(early_time.getHours());
+      current_itme.setMinutes(early_time.getMinutes());
+      // may not be entirely correct.
+      // we'd like early_time to be set to first time of the most recent new day.
+      // but right now if it was left at 9am, or 15 Dec, it wouldn't be set properly.
     }
     if (t0 != "") {
       var saved_time = current_time.getTime();
@@ -644,6 +652,15 @@ function render_other(data, type, row, meta) {
   }
 }
 
+/* below function from DataTables documentation */
+/* Create an array with the values of all the select options in a column */
+$.fn.dataTable.ext.order['dom-select'] = function  ( settings, col )
+{
+    return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
+        return $('select', td).val();
+    } );
+}
+
 function is_clash(a, b, pad) {
   var t0 = b.datetime - pad * 60;
   var t1 = b.datetime + (b.duration + pad) * 60;
@@ -741,8 +758,8 @@ $(document).ready(function() {
       { name: "changeduration", orderable: false, "render": render_change_duration },
       { name: "start", "render": render_start },
       { name: "end", "render": render_end },
-      { name: "mode", orderable: false, "class": "mode-selector c-data", "render": render_mode },
-      { name: "subject", orderable: false, "class": "subject-selector c-data", "render": render_subject },
+      { name: "mode", "orderDataType": "dom-select", "class": "mode-selector c-data", "render": render_mode },
+      { name: "subject", "orderDataType": "dom-select", "class": "subject-selector c-data", "render": render_subject },
       { name: "course", "class": "course-type c-data" },
       { name: "col1", "class": "c-data" },
       { name: "name", "class": "c-data" },
