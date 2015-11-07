@@ -61,7 +61,9 @@ do not include deferred offers.</p>
   <td id='flags-{{ college.adss_code }}'></td>
   <td>
     <a href="{% url 'admissions:edit_teams' college_code=college.adss_code|lower %}">Teams</a>
+    {% if state == 'S' or state == 'D' %}
     <a href="{% url 'admissions:view_schedule' college_code=college.adss_code|lower %}">Schedule</a>
+    {% endif %}
   </td>
 </tr>
 {% endfor %}

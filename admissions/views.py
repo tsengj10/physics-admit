@@ -64,6 +64,7 @@ def notes(request):
 
 @login_required
 def college_list(request):
+    state = OverallState.objects.current()
     colleges = College.objects.all()
     collegedata = {}
     for c in colleges:
@@ -92,6 +93,7 @@ def college_list(request):
     template_values = {
         'colleges': colleges,
         'data': json.dumps(collegedata),
+        'state': state,
         #'year': present_interview_year(),
         }
     return render(request, 'admissions/colleges.html', template_values);

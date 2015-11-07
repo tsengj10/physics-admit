@@ -384,8 +384,8 @@ function recalculate() {
   var checkedrows = checked.parents('tr');
   var tab = $('#slots').DataTable();
   var current_time = new Date(2015, 11, 15, 9, 0, 0, 0);
-  var early_time = new Date(2015, 11, 15, 9, 0, 0, 0); // really just want time
-  var set_early_time = true;
+  var early_hours = 9;
+  var early_minutes = 0;
   var rs = get_candidate_data(tab, checkedrows); // save blanks
   checked.each(function(i, cb) {
     var e = $(cb).parents('tr');
@@ -402,13 +402,25 @@ function recalculate() {
                        dp.getMonth() != current_time.getMonth() ||
                        dp.getFullYear() != current_time.getFullYear())) {
       current_time = dp;
-      current_time.setHours(early_time.getHours());
-      current_itme.setMinutes(early_time.getMinutes());
-      // may not be entirely correct.
-      // we'd like early_time to be set to first time of the most recent new day.
-      // but right now if it was left at 9am, or 15 Dec, it wouldn't be set properly.
-    }
-    if (t0 != "") {
+      if (t0 != "") {
+        // set explicit time as well
+        var saved_time = current_time.getTime();
+        current_time = parseTime(t0, current_time);
+        if (isNaN(current_time)) {
+          current_time = new Date(saved_time);
+          current_time.setHours(early_hours);
+          current_time.setMinutes(early_minutes);
+        } else {
+          early_hours = current_time.getHours();
+          early_minutes = current_time.getMinutes();
+        }
+      } else {
+        // use early time set before (or default)
+        current_time.setHours(early_hours);
+        current_time.setMinutes(early_minutes);
+      }
+    } else if (t0 != "") {
+      // same day, but explicit time
       var saved_time = current_time.getTime();
       current_time = parseTime(t0, current_time);
       if (isNaN(current_time)) current_time = new Date(saved_time);
