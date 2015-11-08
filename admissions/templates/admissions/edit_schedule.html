@@ -86,7 +86,7 @@ input.dpicker { width: 6em }
 <tr>
   <td></td>
   <td><button type='button' id='recalcbutton' onclick='recalculate()'>Recalculate schedule</button></td>
-  <td><button type='button' id='savebutton' class='statebutton' disabled=true onclick='save_schedule()'>Save schedule (all)</button></td>
+  <td><button type='button' id='savebutton' class='statebutton' disabled=true onclick='save_schedule()'>Save all slots</button></td>
 </tr>
 </table>
 </p>
@@ -292,7 +292,8 @@ function clear_blanks() {
 }
 
 function infer_blanks() {
-  var checked = $('.rsel:checked').parents('tr');
+  var checked = $('.rsel:checked');
+  var checkedrows = checked.parents('tr');
   var tab = $('#slots').DataTable();
   var rs = [];
   var dts = []; // array of durations
@@ -300,49 +301,80 @@ function infer_blanks() {
   var tlast = 0;
   var dt0 = 0; // default duration
   var dtb0 = 0; // default break duration
-  // the following construct gives rows in order
-  tab.rows(checked).eq(0).sort().each(function(index) {
-    console.log(index);
-    var r = tab.row(index);
+  // calculate defaults.
+  // the following construct gives rows in display order
+  checked.each(function(i, cb) {
+    var e = $(cb).parents('tr');
+    var r = tab.row(e);
+    //console.log(i);
     //console.log(tab.cell(r, 10).data());
     var t0 = tab.cell(r, 4).data(); // seconds
     var t1 = tab.cell(r, 5).data();
+    var rd = [];
     if (t0 != "" && t1 != "") {
       var dt = t1 - t0;
       if (dt >= 0 && dt < 7200) dts.push(dt);
       var dtb = t0 - tlast;
-      if (dtb >= 0 && dtb < 7200) dtbs.push(dtb);
+      if (dtb >= 0 && dtb < 3600) dtbs.push(dtb);
       var sdt = new Date(t0 * 1000);
-      var rd = [];
-      rd.push(t0);
-      rd.push(t1);
-      rd.push(sdt);
-      rs.push(rd);
-      tlast = t0;
-    } else if (t0 == "" && tlast == 0) {
-      // no starting time - should display a message
-      alert("Need to specify a start date/time.");
-      return false;
-    }
-    if (dts.length > 0) {
-      var im = dts.length / 2;
-      dt0 = dts[im];
+      rs[i] = { "t0": t0, "t1": t1, "sdt": sdt };
+      tlast = t1;
     } else {
-      alert("No typical (<2 hours) interviews defined.");
-      return false;
+      rs[i] = { "t0": -1, "t1": -1, "sdt": null };
     }
-    if (dtbs.length > 0) {
-      var imb = dtbs.length / 2;
-      dtb0 = dtbs[imb];
-    } else {
-      dtb0 = 0; // no default break; assume simply not specified
-    }
-    $('#interviewduration').val(dt0);
-    $('#breakduration').val(dtb0);
   });
-  tab.rows(checked).eq(0).sort().each(function(index) {
-    // recalculate schedule in here.
+  if (dts.length > 0) {
+    var im = Math.floor(dts.length / 2);
+    dt0 = dts[im]; // seconds
+  } else {
+    alert("No typical (<2 hours) interviews selected.  Make sure you select some.");
+    return;
+  }
+  if (dtbs.length > 0) {
+    var imb = Math.floor(dtbs.length / 2);
+    dtb0 = dtbs[imb]; // seconds
+  } else {
+    dtb0 = 0; // no default break; assume simply not specified
+  }
+  $('#interviewduration').val(Math.round(dt0/60));
+  $('#breakduration').val(Math.round(dtb0/60));
+  // now recalculate schedule
+  var current_time = null;
+  checked.each(function(i, cb) {
+    var e = $(cb).parents('tr');
+    var r = tab.row(e);
+    //console.log(i);
     // schedule should start with the first date and time
+    if (rs[i].t0 >= 0) {
+      var new_time = new Date(rs[i].t0 * 1000);
+      //console.log("index " + i + " t0 " + rs[i].t0);
+      if (current_time == null ||
+          current_time.getDate() != new_time.getDate() ||
+          current_time.getMonth() != new_time.getMonth() ||
+          current_time.getFullYear() != new_time.getFullYear()) {
+        // no date set before, or new date, so set date and time
+        var s = $.datepicker.formatDate('dd/mm/yy', new_time);
+        //console.log($('.dpicker', e));
+        //console.log(s);
+        $('.dpicker', e).prop('value',
+            $.datepicker.formatDate('dd/mm/yy', new_time));
+        //console.log(new_time);
+        $('.change-start', e).prop('value', formatTime(new_time));
+      } else if (current_time.getTime() != new_time.getTime()) {
+        console.log("Explicit time " + current_time.getTime() + " " + new_time.getTime());
+        console.log(current_time);
+        console.log(new_time);
+        // new time doesn't agree with current, so set explicitly
+        $('.change-start', e).prop('value', formatTime(new_time));
+      }
+      // check duration
+      var dt2 = rs[i].t1 - rs[i].t0;
+      if (dt2 != dt0) {
+        $('.change-duration', e).prop('value', Math.round(dt2/60));
+      }
+      // update time
+      current_time = new Date((rs[i].t1 + dtb0) * 1000);
+    }
   });
 }
 
@@ -392,7 +424,12 @@ function recalculate() {
     var r = tab.row(e);
     // check if we should schedule an interview
     var mode = $('.imodes', e).val();
-    if (mode == "0") return; // skip if no interview
+    if (mode == "0") {
+      // skip if no interview; need to clear blanks
+      tab.cell(r, 4).data(""); // start date/time
+      tab.cell(r, 5).data(""); // stop time
+      return;
+    }
     // check if first entry has a starting time
     //var dp = $('.dpicker', e).prop('value');
     var dp = $('.dpicker', e).datepicker('getDate');
@@ -768,8 +805,8 @@ $(document).ready(function() {
       { name: "changedate", orderable: false, "class": "datepickers", "render": render_change_date },
       { name: "changestart", orderable: false, "render": render_change_start },
       { name: "changeduration", orderable: false, "render": render_change_duration },
-      { name: "start", "render": render_start },
-      { name: "end", "render": render_end },
+      { name: "start", "class": "t-start", "render": render_start },
+      { name: "end", "class": "t-end", "render": render_end },
       { name: "mode", "orderDataType": "dom-select", "class": "mode-selector c-data", "render": render_mode },
       { name: "subject", "orderDataType": "dom-select", "class": "subject-selector c-data", "render": render_subject },
       { name: "course", "class": "course-type c-data" },
