@@ -27,10 +27,6 @@ td.comments-detail {
   cursor: pointer;
 }
 
-td.clash {
-  color: red;
-}
-
 .comments { text-align: left }
 
 input.change-duration { width: 3em }
@@ -38,6 +34,8 @@ input.change-duration { width: 3em }
 input.change-start { width: 4em }
 
 input.dpicker { width: 6em }
+
+.clash { color: red }
 
 </style>
 {% endblock %}
@@ -98,14 +96,21 @@ input.dpicker { width: 6em }
 <tr>
   <th>Schedule Defaults</th>
   <th>(minutes)</th>
+  <th>Schedule Copy</th>
 </tr>
 <tr>
   <td>Interview duration</td>
   <td><input type="number" id="interviewduration" style="width:5em"></td>
+  <td><select id='copysource'><option value="">- No source -</option>
+    {% for src in teams %}
+    <option value="{{ src.pk }}">{{ src.names }}</option>
+    {% endfor %}
+    </select></td>
 </tr>
 <tr>
   <td>Break duration</td>
   <td><input type="number" id="breakduration" style="width:5em"></td>
+  <td><button type='button' id='copybutton' onclick='copy_schedule()'>Copy from above</button</td>
 </tr>
 </table>
 </p>
@@ -484,6 +489,25 @@ function recalculate() {
   enable_save();
 }
 
+function copy_schedule() {
+  var tpk = parseInt($('#copysource').val());
+  //console.log("Copy from team " + tpk);
+  var tab = $('#slots').DataTable();
+  tab.rows().eq(0).each(function(index) {
+    var r = tab.row(index);
+    var pk = tab.cell(r, PKI).data();
+    //console.log("Copy for pk=" + pk);
+    var other = students[pk].other;
+    for (var i = 0; i < other.length; ++i) {
+      //console.log("  compare tpk " + tpk + " " + other[i].tpk);
+      if (other[i].tpk != tpk) continue;
+      tab.cell(r, 4).data(other[i].datetime);
+      tab.cell(r, 5).data(other[i].datetime + other[i].duration * 60);
+    }
+  });
+  tab.draw();
+}
+
 function save_schedule() {
   var rs = [];
   var tab = $('#slots').DataTable();
@@ -561,6 +585,7 @@ function rotate_candidates_up() {
   map[0] = checked.length - 1;
   for (var i = 0; i < checked.length - 1; ++i) map.push(i);
   set_candidate_data(tab, checked, rs, map);
+  enable_save();
 }
 
 function rotate_candidates_down() {
@@ -572,6 +597,7 @@ function rotate_candidates_down() {
   for (var i = 1; i < checked.length; ++i) map.push(i);
   map[checked.length - 1] = 0;
   set_candidate_data(tab, checked, rs, map);
+  enable_save();
 }
 
 /**
@@ -600,6 +626,7 @@ function shuffle_candidates() {
   for (var i = checked.length - 1; i >= 0; --i) map[i] = i;
   shuffleArray(map);
   set_candidate_data(tab, checked, rs, map);
+  enable_save();
 }
 
 //
@@ -647,7 +674,12 @@ function render_change_duration(data, type, row, meta) {
 function render_start(data, type, row, meta) {
   if (type == "display" && data != "") {
     var a = new Date(data * 1000);
-    return formatDate(a) + " " + formatTime(a);
+    var s = formatDate(a) + " " + formatTime(a);
+    if (any_clash({ datetime: data, duration: (row[5]-data)/60 }, row[12], 20)) {
+      return "<span class='clash'>" + s + "</span>"
+    } else {
+      return s;
+    }
   } else {
     return data;
   }
@@ -718,22 +750,22 @@ $.fn.dataTable.ext.order['dom-select'] = function  ( settings, col )
     } );
 }
 
-$.fn.dataTable.ext.order['dom-mode'] = function  ( settings, col )
-{
-    return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
-        return $('select', td).val();
-    } );
-}
+//$.fn.dataTable.ext.order['dom-mode'] = function  ( settings, col )
+//{
+//    return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
+//        return $('select', td).val();
+//    } );
+//}
 
 function is_clash(a, b, pad) {
   var t0 = b.datetime - pad * 60;
   var t1 = b.datetime + (b.duration + pad) * 60;
   var u0 = a.datetime;
   var u1 = a.datetime + a.duration * 60;
-  if (u0 >= t0 && u0 < t1) return true;
-  if (u1 >= t0 && u1 < t1) return true;
-  if (u0 < t0 && u1 >= t1) return true;
-  return false;
+  if (u1 < t0) return false;
+  if (u0 > t1) return false;
+  //console.log("clash:  " + t0 + " " + t1 + " # " + u0 + " " + u1);
+  return true;
 }
 
 function any_clash(a, bs, pad) {
@@ -822,13 +854,13 @@ $(document).ready(function() {
       { name: "changeduration", orderable: false, "render": render_change_duration },
       { name: "start", "class": "t-start", "render": render_start },
       { name: "end", "class": "t-end", "render": render_end },
-      { name: "mode", "orderDataType": "dom-mode", "class": "mode-selector c-data", "render": render_mode },
+      { name: "mode", "orderDataType": "dom-select", "class": "mode-selector c-data", "render": render_mode },
       { name: "subject", "orderDataType": "dom-select", "class": "subject-selector c-data", "render": render_subject },
       { name: "course", "class": "course-type c-data" },
       { name: "col1", "class": "c-data" },
       { name: "name", "class": "c-data" },
       { name: "notes", "class": "comments-detail c-data" },
-      { name: "other", "render": render_other, "class": "c-data", "defaultContent": "None" },
+      { name: "other", orderable: false, "render": render_other, "class": "c-data", "defaultContent": "None" },
       { name: "pk", "class": "pk-value c-data", visible: false },
     ],
     "order": [ [ 4, "asc" ] ],

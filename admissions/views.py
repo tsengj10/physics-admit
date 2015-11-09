@@ -314,9 +314,11 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
       'candidate', 'team')
   comments = Comment.objects.filter(candidate__in=students)
   infos = CandidateInfo.objects.filter(candidate__in=students)
+  teams = college.interview_team.all()
   template_values = {
       'return_to': return_to,
       'team': team,
+      'teams': teams,
       'students': students,
       'slots': slots,
       'comments': comments,
