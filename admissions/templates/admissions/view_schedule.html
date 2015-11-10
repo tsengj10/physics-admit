@@ -14,6 +14,11 @@ Admissions database - {{ college.name }} schedule
 <script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
 <script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
 <script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
+<style>
+
+.clash { color: red }
+
+</style>
 {% endblock %}
 {% block content %}
 <h2>Interviews for {{ college.name }} ({{ college.adss_code }})</h2>
@@ -96,19 +101,37 @@ students[{{ slot.candidate.pk }}]["s"].push({
 
 var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+function twoDigit(n) {
+  var s = (n < 10 ? "0" : "");
+  return s + n;
+}
+
 function formatDate(d) {
-  var da = d.getDate();
-  var s = da < 10 ? "0" : "";
-  s += da;
-  s += " " + months[d.getMonth()];
-  return s;
+  return twoDigit(d.getDate()) + " " + months[d.getMonth()];
 }
 
 function formatTime(d) {
-  return d.toLocaleTimeString();
-  //var hour = a.getHours();
-  //var min = a.getMinutes();
-  //var sec = a.getSeconds();
+  //return d.toLocaleTimeString();
+  return twoDigit(d.getHours()) + ":" + twoDigit(d.getMinutes());
+}
+
+function is_clash(a, b, pad) {
+  var t0 = b.datetime - pad * 60;
+  var t1 = b.datetime + (b.duration + pad) * 60;
+  var u0 = a.datetime;
+  var u1 = a.datetime + a.duration * 60;
+  if (u1 < t0) return false;
+  if (u0 > t1) return false;
+  return true;
+}
+
+function any_clash(bs, pad) {
+  for (var i = 0; i < bs.length; ++i) {
+    for (var j = i + 1; j < bs.length; ++j) {
+      if (is_clash(bs[i], bs[j], pad)) return true;
+    }
+  }
+  return false;
 }
 
 var dataset = [];
@@ -116,7 +139,11 @@ $.each(students, function(pk, v) {
   var fields = [];
   var last = 1+5*teams.length; // last element of array of length 2+5*j
   for (var i = last; i > 0; --i) fields[i] = ""; // pre-initialize array
-  fields[0] = v.n;
+  if (any_clash(v.s, 20)) { // 20min padding
+    fields[0] = "<span class='clash'>" + v.n + "</span>"
+  } else {
+    fields[0] = v.n;
+  }
   $.each(v.s, function(i, u) {
     var tpk = u.tpk;
     for (var j = 0; j < teams.length; ++j) {

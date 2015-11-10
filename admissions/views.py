@@ -258,8 +258,13 @@ def view_schedule(request, college_code, return_to='admissions:colleges'):
   college = get_object_or_404(College, adss_code=college_code.upper())
   allow_edit = college in get_colleges_for_user(request.user)
   teams = college.interview_team.all()
-  students1 = Candidate.objects.filter(college1=college, state=Candidate.STATE_SUMMONED)
-  students2 = Candidate.objects.filter(college2=college, state=Candidate.STATE_SUMMONED)
+  overallstate = OverallState.objects.current()
+  if overallstate == OverallState.DEVELOPMENT:
+    students1 = Candidate.objects.filter(college1=college)
+    students2 = Candidate.objects.filter(college2=college)
+  else:
+    students1 = Candidate.objects.filter(college1=college, state=Candidate.STATE_SUMMONED)
+    students2 = Candidate.objects.filter(college2=college, state=Candidate.STATE_SUMMONED)
   #s1 = list(students1)
   #s2 = list(students2)
   #logger.info("s1 = {}".format(s1))
