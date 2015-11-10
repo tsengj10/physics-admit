@@ -33,7 +33,7 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     filename = options['filename']
     with open(filename, 'r') as csvfile:
-      inf = csv.eader(csvfile)
+      inf = csv.reader(csvfile)
       first = True
       for row in inf:
         if first:
