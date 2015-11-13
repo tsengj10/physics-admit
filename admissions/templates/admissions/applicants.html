@@ -252,6 +252,7 @@ var user_college_list = "{{ user_colleges }}";
 var user_college_list_r = user_college_list.replace(/&quot;/g,'"');
 var user_colleges = JSON.parse(user_college_list_r);
 var use_all_colleges = (user_colleges[0] == "ALL");
+var readonly_user = (user_colleges.length == 0);
 var college_list_code = "{{ college.adss_code }}";
 
 function offerable(rank) {
@@ -489,7 +490,7 @@ function renderChangeIntCol2(data, type, row, meta) {
 
 function renderChangeOffer(data, type, row, meta) {
 {% if state_enter_offers %}
-  if (type === "display") {
+  if (type === "display" && !readonly_user) {
     if (!use_all_colleges && !offerable(row["rank"])) return data;
     var jr = meta.row;
     var td = [];
