@@ -8,6 +8,7 @@ from admissions.forms import *
 import json
 import logging
 import datetime
+from array import array
 
 # Create your views here.
 
@@ -195,6 +196,38 @@ def edit_college(request, college, return_to='admissions:colleges'):
       'college_form': college_form,
       }
   return render(request, 'admissions/edit_college.html', template_values)
+
+#---------------------------------------------------------------
+# shortlist report
+#---------------------------------------------------------------
+
+@login_required
+def view_shortlist_report(request, return_to='admissions:colleges'):
+  total_places = 0
+  for c in College.objects.all():
+    total_places = total_places + c.total_places
+  shortlist_target = total_places * 2.5
+  logger.info("Shortlist target {}".format(shortlist_target))
+  marks = array('l')
+  rescues = array('l')
+  for i in range(0, 101):
+    marks.append(0)
+  for i in range(0, 101):
+    rescues.append(0)
+  for s in Candidate.objects.all():
+    pt = int(s.pat_physics + s.pat_maths)
+    marks[pt] = marks[pt] + 1
+    if (s.rescued or s.reserved):
+      rescues[pt] = rescues[pt] + 1
+  scores = []
+  for i in range(0, 101):
+    scores.append({ 'index':i, 'pat':marks[i], 'rescues':rescues[i] })
+  template_values = {
+    'return_to': return_to,
+    'scores': scores,
+    'shortlist_target': shortlist_target,
+    }
+  return render(request, 'admissions/view_shortlist_report.html', template_values)
 
 #---------------------------------------------------------------
 # interview teams

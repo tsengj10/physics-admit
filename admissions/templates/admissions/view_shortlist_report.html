@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% load staticfiles %}
+{% block title %}
+Admissions database - shortlist report
+{% endblock %}
+{% block head %}
+<script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
+<style>
+table { font-size: 13px;
+}
+th {
+  font-weight: bold;
+  padding-left: 3em;
+  padding-right: 3em;
+}
+</style>
+{% endblock %}
+{% block content %}
+<h2>Shortlist report</h2>
+
+<p>
+The table below shows the number of candidates to be invited to interview
+if the PAT threshold is set to a given mark.  The number is the sum of
+those who score above the threshold, plus the number below who have
+been rescued by tutors.
+</p>
+
+<p>
+Aiming for 2.5 interviews per place, the current target shortlist is
+{{ shortlist_target }}.
+</p>
+
+<p>
+<table id='marks'>
+<thead>
+<tr><th>PAT</th><th>Candidates</th><th>Rescues</th><th>Shortlist</th></tr>
+</thead>
+<tbody>
+{% for s in scores %}
+  <tr><td>{{ s.index }}</td><td>{{ s.pat }}</td><td>{{ s.rescues }}</td><td></td></tr>
+{% endfor %}
+</tbody>
+</table>
+</p>
+{% endblock %}
+{% block scripts %}
+<script>
+$(document).ready(function() {
+  var sum = 0;
+  var c = [];
+  var r = [];
+  r.push(0); // rescues affect higher mark thresholds
+  var rows = $('#marks tbody tr');
+  rows.each(function(i, e) {
+    var row = $('td', e);
+    sum += parseInt(row.eq(2).text());
+    r.push(sum);
+    c.push(parseInt(row.eq(1).text()));
+  });
+  var n = [];
+  sum = 0;
+  for (var i = c.length - 1; i >= 0; --i) {
+    sum += c[i];
+    n[i] = sum + r[i]
+  }
+  rows.each(function(i, e) {
+    var row = $('td', e);
+    row.eq(3).text(n[i]);
+  });
+});
+</script>
+{% endblock %}
