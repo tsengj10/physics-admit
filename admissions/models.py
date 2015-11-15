@@ -258,6 +258,39 @@ class Candidate(models.Model):
     verbose_name = "Candidate"
     verbose_name_plural = "Candidates"
 
+class PATDetails(models.Model):
+  """Model containing detailed PAT marks"""
+  candidate = models.OneToOneField("Candidate", primary_key=True, related_name="pat")
+  date = models.DateField(null=True, help_text="Date of test")
+  q1 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q2 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q3 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q4 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q5 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q6 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q7 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q8 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q9 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q10 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q11 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q12 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q13 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q14 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q15 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q16 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q17 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q18 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q19 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q20 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q21 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q22 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q23 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q24 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+  q25 = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+
+  def __str__(self):
+    return "PAT: {0}".format(self.candidate)
+
 class CandidateInfo(models.Model):
   """Model containing immutable information about a student (or, more correctly,
   candidate)"""

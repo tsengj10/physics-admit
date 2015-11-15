@@ -107,6 +107,9 @@ class Command(BaseCommand):
                            'verified_in_care': False })
           self.stdout.write('Candidate {0} {1}'.format(a, 'created' if created else 'updated'))
 
+          p, created = PATDetails.objects.update_or_create(candidate = a)
+          self.stdout.write('PATDetails {0} {1}'.format(a, 'created' if created else 'updated'))
+
   def load_ed(self, students, name):
     with open(name,'r') as csvfile:
       firstline = 1

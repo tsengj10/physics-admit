@@ -50,6 +50,7 @@ class Command(BaseCommand):
             continue
 
           change = False
+          changepat = False
           for i in range(1,len(fields)):
             if i >= len(row):
               break
@@ -65,8 +66,15 @@ class Command(BaseCommand):
               s.pat_physics = row[i]
               s.pat_time = pattime
               change = True
+            elif re.match('^q[0-9]+$', fields[i]):
+              s.pat.date = pattime.date()
+              setattr(s.pat, field, row[i])
+              changepat = True
 
           if change:
             self.stdout.write("Data changed for {} (ucas {})".format(row[0], s.ucas_id)
             s.save()
+          if changepat:
+            self.stdout.write("PAT details changed for {} (ucas {})".format(row[0], s.ucas_id)
+            s.pat.save()
 
