@@ -21,6 +21,8 @@ class Weights(models.Model):
   pat_physics = models.FloatField(default=0)
   interview1 = models.FloatField(default=0) # for i1 and i2
   interview2 = models.FloatField(default=0) # for i1 and i2
+  shortlist_per_place = models.FloatField(default=0)
+  shortlist_max = models.FloatField(default=0)
 
 #===========================================================================
 

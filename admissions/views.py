@@ -206,7 +206,9 @@ def view_shortlist_report(request, return_to='admissions:colleges'):
   total_places = 0
   for c in College.objects.all():
     total_places = total_places + c.total_places
-  shortlist_target = total_places * 2.5
+  shortlist_target = total_places * default_weights.shortlist_per_place
+  if shortlist_target > default_weights.shortlist_max:
+    shortlist_target = default_weights.shortlist_max
   logger.info("Shortlist target {}".format(shortlist_target))
   marks = array('l')
   rescues = array('l')
