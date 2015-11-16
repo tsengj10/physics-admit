@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 
+import re
 import csv
-from datetime import date
+from datetime import date, datetime
 
 from admissions.models import *
 
@@ -51,6 +52,7 @@ class Command(BaseCommand):
 
           change = False
           changepat = False
+          pattime = datetime.datetime(2015,11,4,14,0,0,0)
           for i in range(1,len(fields)):
             if i >= len(row):
               break
@@ -66,15 +68,17 @@ class Command(BaseCommand):
               s.pat_physics = row[i]
               s.pat_time = pattime
               change = True
-            elif re.match('^q[0-9]+$', fields[i]):
-              s.pat.date = pattime.date()
-              setattr(s.pat, field, row[i])
-              changepat = True
+            elif re.match('^Q[0-9]+$', fields[i]) and len(row[i]) > 0:
+              current_value = getattr(s.pat, fields[i].lower())
+              if s.pat.date == None or float(current_value) != float(row[i]):
+                setattr(s.pat, fields[i].lower(), float(row[i]))
+                changepat = True
 
           if change:
-            self.stdout.write("Data changed for {} (ucas {})".format(row[0], s.ucas_id)
+            self.stdout.write("Data changed for {} (ucas {})".format(row[0], s.ucas_id))
             s.save()
           if changepat:
-            self.stdout.write("PAT details changed for {} (ucas {})".format(row[0], s.ucas_id)
+            self.stdout.write("PAT details changed for {} (ucas {})".format(row[0], s.ucas_id))
+            s.pat.date = pattime.date()
             s.pat.save()
 
