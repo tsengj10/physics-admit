@@ -757,7 +757,7 @@ def get_student_states(since, user, college_code=None):
   if since:
     base = datetime.datetime.utcfromtimestamp(int(since))
     kw['modification_timestamp__gt'] = base
-  if OverallState.objects.current() in [ OverallState.LONGLIST, OverallState.SHORTLIST ]:
+  if OverallState.objects.current() in [ OverallState.SHORTLIST ]:
     kw['state'] = Candidate.STATE_SUMMONED
   #logger.info("kw = {}".format(kw))
 
