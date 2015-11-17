@@ -98,6 +98,7 @@ class Command(BaseCommand):
 
     alls = []
     apps = []
+    ntuple = []
     college = {}
     cs = College.objects.all()
     for c in cs:
@@ -111,6 +112,7 @@ class Command(BaseCommand):
     for s in ss:
       j = self.make_json(s, overallstate)
       apps.append(j)
+      ntuple.append(self.make_ntrow(j, collegekeys))
       if s.state != Candidate.STATE_WITHDRAWN and s.state != Candidate.STATE_DESUMMONED:
         alls.append(j)
         if s.college1:
@@ -149,6 +151,12 @@ class Command(BaseCommand):
         d = { "data": college[c.adss_code] }
         json.dump(d, f)
         f.close()
+
+    # stats ntuple
+    f = open('json/marks.csv', 'w')
+    out = csv.writer(f, quoting=csv.QUOTE_NONE)
+    for r in ntuple:
+      out.writerow(r)
 
   def add_qual_summary(self, qual, q):
     qtype = q['t']
@@ -476,4 +484,29 @@ class Command(BaseCommand):
       j["comments"] = cmts
 
     return j
+
+  def make_ntrow(self, data, collegekeys):
+    # row columns:  pk id gender school sd course c1 c2 c3 c4 c5 c6 pm pp i1 i2 i3 i4 i5
+    #               0  1  2      3      4  5      6  7  8  9  10 11 12 13 14 15 16 17 18
+    d = []
+    d.append(data['pk'])
+    d.append(data['det']['id'])
+    d.append(1 if data['g'] == 'M' else 2 if data['g'] == 'F' else 3)
+    d.append(self.school_types[data['scht']])
+    d.append(data['sdm'])
+    d.append(self.course_types[data['course']])
+    d.append(collegekeys[data['c1']])
+    d.append(collegekeys[data['c2']])
+    d.append(collegekeys[data['c3']])
+    d.append(collegekeys[data['c4']])
+    d.append(collegekeys[data['c5']])
+    d.append(collegekeys[data['c6']])
+    d.append(data['pm'] if data['pm'] else 0)
+    d.append(data['pp'] if data['pp'] else 0)
+    d.append(data['i1'] if data['i1'] else 0)
+    d.append(data['i2'] if data['i2'] else 0)
+    d.append(data['i3'] if data['i3'] else 0)
+    d.append(data['i4'] if data['i4'] else 0)
+    d.append(data['i5'] if data['i5'] else 0)
+    return d
 
