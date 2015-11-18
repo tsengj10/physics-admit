@@ -54,24 +54,25 @@ class Command(BaseCommand):
           changepat = False
           pattime = datetime.datetime(2015,11,4,14,0,0,0)
           for i in range(1,len(fields)):
+            fname = fields[i].lower()
             if i >= len(row):
               break
-            if re.match('^college[1-6]$', fields[i]):
-              change = change or changecollege(s, fields[i], row[i])
-            elif fields[i] == "date":
+            if re.match('^college[1-6]$', fname):
+              change = change or changecollege(s, fname, row[i])
+            elif fname == "date":
               pattime = datetime.datetime.strptime(row[i], '%d/%m/%Y')
-            elif fields[i] == "maths" or fields[i] == "pat_maths":
+            elif fname == "maths" or fname == "pat_maths":
               s.pat_maths = row[i]
               s.pat_time = pattime
               change = True
-            elif fields[i] == "physics" or fields[i] == "pat_physics":
+            elif fname == "physics" or fname == "pat_physics":
               s.pat_physics = row[i]
               s.pat_time = pattime
               change = True
-            elif re.match('^Q[0-9]+$', fields[i]) and len(row[i]) > 0:
-              current_value = getattr(s.pat, fields[i].lower())
+            elif re.match('^Q[0-9]+$', fname) and len(row[i]) > 0:
+              current_value = getattr(s.pat, fname)
               if s.pat.date == None or float(current_value) != float(row[i]):
-                setattr(s.pat, fields[i].lower(), float(row[i]))
+                setattr(s.pat, fname, float(row[i]))
                 changepat = True
 
           if change:
