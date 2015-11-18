@@ -69,9 +69,10 @@ class Command(BaseCommand):
               s.pat_physics = row[i]
               s.pat_time = pattime
               change = True
-            elif re.match('^Q[0-9]+$', fname) and len(row[i]) > 0:
+            elif re.match('^q[0-9]+$', fname) and len(row[i]) > 0:
               current_value = getattr(s.pat, fname)
               if s.pat.date == None or float(current_value) != float(row[i]):
+                self.stdout.write("Change detected {0} {1}".format(current_value, row[i]))
                 setattr(s.pat, fname, float(row[i]))
                 changepat = True
 
