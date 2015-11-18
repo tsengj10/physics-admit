@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from admissions.models import *
-from admissions.fixtures.scores import scores, list_maths, list_physics
+from admissions.fixtures.scores1 import scores, list_maths, list_physics
 
 class Command(BaseCommand):
   help = 'Check PAT details'
