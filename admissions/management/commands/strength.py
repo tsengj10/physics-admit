@@ -17,5 +17,5 @@ class Command(BaseCommand):
       scores.sort(reverse=True)
       top = scores[:n]
       avg = float(sum(top)) / float(len(top))
-      self.stdout.write("{0}: {1} places out of {2} candidates, strength {3}".format(c.adss_code, len(top), len(scores), avg)
+      self.stdout.write("{0}: {1} places out of {2} candidates, strength {3}".format(c.adss_code, len(top), len(scores), avg))
 
