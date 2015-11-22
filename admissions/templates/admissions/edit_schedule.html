@@ -127,36 +127,38 @@ input.dpicker { width: 6em }
   </tr>
   <tr>
     <th><input type='checkbox' id='arsel' onchange='all_select()'></th>
-    <th>Date</th>
-    <th>Time</th>
-    <th>Duration</th>
-    <th>Start</th>
-    <th>End</th>
-    <th>Type</th>
-    <th>Subject</th>
-    <th>Course</th>
-    <th>Col1</th>
-    <th>Name</th>
-    <th>Notes</th>
-    <th>Other interviews</th>
+    <th title="Change interview date">Date</th>
+    <th title="Change start time">Time</th>
+    <th title="Change duration (minutes)">Duration</th>
+    <th title="Interview start">Start</th>
+    <th title="Interview end">End</th>
+    <th title="Interview type">Type</th>
+    <th title="Interview subject">Subject</th>
+    <th title="Candidate course choice">Course</th>
+    <th title="College priority order">Order</th>
+    <th title="First college choice">Col1</th>
+    <th title="Candidate name">Name</th>
+    <th title="Notes on candidate">Notes</th>
+    <th title="Other interviews">Other interviews</th>
     <th>Index</th>
   </tr>
 </thead>
 <tfoot>
   <tr>
     <th></th>
-    <th>Date</th>
-    <th>Time</th>
-    <th>Duration</th>
-    <th>Start</th>
-    <th>End</th>
-    <th>Type</th>
-    <th>Subject</th>
-    <th>Course</th>
-    <th>Col1</th>
-    <th>Name</th>
-    <th>Notes</th>
-    <th>Other interviews</th>
+    <th title="Change interview date">Date</th>
+    <th title="Change start time">Time</th>
+    <th title="Change duration (minutes)">Duration</th>
+    <th title="Interview start">Start</th>
+    <th title="Interview end">End</th>
+    <th title="Interview type">Type</th>
+    <th title="Interview subject">Subject</th>
+    <th title="Candidate course choice">Course</th>
+    <th title="College priority order">Order</th>
+    <th title="First college choice">Col1</th>
+    <th title="Candidate name">Name</th>
+    <th title="Notes on candidate">Notes</th>
+    <th title="Other interviews">Other interviews</th>
     <th>Index</th>
   </tr>
 </tfoot>
@@ -211,7 +213,7 @@ students[{{ slot.candidate.pk }}]["other"].push({
 
 var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-var PKI = 13; // last column number
+var PKI = 14; // last column number
 
 function twoDigit(n) {
   var s = (n < 10 ? "0" : "");
@@ -773,6 +775,14 @@ function any_clash(a, bs, pad) {
   return false;
 }
 
+// pad = 5min = 300sec
+function internal_clash(bs, i) {
+  for (var j = 0; j < bs.length; ++j) {
+    if (i != j && is_clash(bs[i], bs[j], 300)) return true;
+  }
+  return false;
+}
+
 function enable_save() {
   $('.statebutton').removeAttr('disabled');
 }
@@ -819,9 +829,10 @@ $.each(students, function(pk, v) {
     fields[7] = v.s.subject == 'physics' ? '1' : '2'; // should be a selector
   }
   fields[8] = v.course;
-  fields[9] = v.col1;
-  fields[10] = v.n;
-  fields[11] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes
+  fields[9] = (v.col1 == "{{ team.college.adss_code }}") ? 1 : 2;
+  fields[10] = v.col1;
+  fields[11] = v.n;
+  fields[12] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes
   // other interviews in v.other
   //var s = [];
   //for (var i = 0; i < v.other.length; ++i) {
@@ -831,9 +842,9 @@ $.each(students, function(pk, v) {
   //         u.tcol + " " + formatDate(a) + " " + formatTime(a));
   //}
   //fields[12] = s.join('; ');
-  fields[12] = (v['other'] != undefined) ? v.other : [];
+  fields[13] = (v['other'] != undefined) ? v.other : [];
   //console.log(fields[12]);
-  fields[13] = pk;
+  fields[14] = pk;
   //console.log(fields);
   dataset.push(fields);
 });
@@ -857,6 +868,7 @@ $(document).ready(function() {
       { name: "mode", "orderDataType": "dom-select", "class": "mode-selector c-data", "render": render_mode },
       { name: "subject", "orderDataType": "dom-select", "class": "subject-selector c-data", "render": render_subject },
       { name: "course", "class": "course-type c-data" },
+      { name: "order", "class": "c-data" },
       { name: "col1", "class": "c-data" },
       { name: "name", "class": "c-data" },
       { name: "notes", "class": "comments-detail c-data" },
