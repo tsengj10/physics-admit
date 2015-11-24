@@ -75,8 +75,10 @@ Admissions database - {{ college.name }} schedule
 {% block scripts %}
 <script>
 var teams = [];
+var tslots = {};
 {% for team in teams %}
 teams.push({{ team.pk }});
+tslots[{{ team.pk }}] = [];
 {% endfor %}
 var teamspk2i = {};
 $.each(teams, function(index, value) {
@@ -94,6 +96,10 @@ students[{{ slot.candidate.pk }}]["s"].push({
     "tcol": "{{ slot.team.college.adss_code }}",
     "subject": "{{ slot.subject }}",
     "mode": "{{ slot.mode }}",
+    "datetime": {{ slot.time|date:"U" }},
+    "duration": {{ slot.length }},
+  });
+tslots[{{ slot.team.pk }}].push({
     "datetime": {{ slot.time|date:"U" }},
     "duration": {{ slot.length }},
   });
@@ -120,8 +126,8 @@ function is_clash(a, b, pad) {
   var t1 = b.datetime + (b.duration + pad) * 60;
   var u0 = a.datetime;
   var u1 = a.datetime + a.duration * 60;
-  if (u1 < t0) return false;
-  if (u0 > t1) return false;
+  if (u1 <= t0) return false;
+  if (u0 >= t1) return false;
   return true;
 }
 
@@ -133,6 +139,12 @@ function any_clash(bs, pad) {
   }
   return false;
 }
+
+// detect any clashes within a team schedule (only direct overlaps)
+var tclash = {};
+$.each(tslots, function(pk, v) {
+  tclash[pk] = any_clash(v, 0);
+});
 
 var dataset = [];
 $.each(students, function(pk, v) {
@@ -152,11 +164,13 @@ $.each(students, function(pk, v) {
         var b = new Date((u.datetime + u.duration*60) * 1000);
         //console.log("start " + a + " end " + b);
         var jj = j * 5;
+        var prefix = tclash[tpk] ? "<span class='clash'>" : "";
+        var postfix = tclash[tpk] ? "</span>" : "";
         fields[++jj] = u.subject;
         fields[++jj] = u.mode;
-        fields[++jj] = formatDate(a);
-        fields[++jj] = formatTime(a);
-        fields[++jj] = formatTime(b);
+        fields[++jj] = prefix + formatDate(a) + postfix;
+        fields[++jj] = prefix + formatTime(a) + postfix;
+        fields[++jj] = prefix + formatTime(b) + postfix;
         return true;
       }
     }

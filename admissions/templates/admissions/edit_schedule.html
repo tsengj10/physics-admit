@@ -777,8 +777,8 @@ function is_clash(a, b, pad) {
   var t1 = b.datetime + (b.duration + pad) * 60;
   var u0 = a.datetime;
   var u1 = a.datetime + a.duration * 60;
-  if (u1 < t0) return false;
-  if (u0 > t1) return false;
+  if (u1 <= t0) return false;
+  if (u0 >= t1) return false;
   //console.log("clash:  " + t0 + " " + t1 + " # " + u0 + " " + u1);
   return true;
 }
@@ -792,8 +792,9 @@ function any_clash(a, bs, pad) {
 function internal_clash(ts0, ts1, i) {
   if (ts0[i] == "" || ts1[i] == "") return false;
   var pad = $('#breakduration').val();
-  if (pad == "") pad = 300;
+  if (pad == "") pad = 5;
   --pad;
+  pad *= 60; // convert to seconds
   console.log("check (" + i + ") " + formatDate(new Date(ts0[i]*1000)) + " " +
               formatTime(new Date(ts0[i]*1000)) + " " + formatTime(new Date(ts1[i]*1000)));
   console.log("length " + ts0.length);

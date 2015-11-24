@@ -163,6 +163,7 @@ class Command(BaseCommand):
                   title = row[14],
                   award_body = row[2],
                   qualification_date = qdate,
+                  qualification_type = QualificationType.objects.get(name=row[10]) if row[10] else None,
                   defaults = {
                     'application_scheme': row[1],
                     'qualification_type': QualificationType.objects.get(name=row[10]) if row[10] else None,
