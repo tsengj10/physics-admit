@@ -37,6 +37,8 @@ input.dpicker { width: 6em }
 
 .clash { color: red }
 
+.iclash { color: magenta }
+
 </style>
 {% endblock %}
 {% block content %}
@@ -488,6 +490,7 @@ function recalculate() {
   map = [];
   for (var i = 0; i < checkedrows.length; ++i) map.push(i);
   set_candidate_data(tab, checkedrows, rs, map);
+  //tab.draw();
   enable_save();
 }
 
@@ -677,9 +680,19 @@ function render_start(data, type, row, meta) {
   if (type == "display" && data != "") {
     var a = new Date(data * 1000);
     var s = formatDate(a) + " " + formatTime(a);
-    if (any_clash({ datetime: data, duration: (row[5]-data)/60 }, row[12], 20)) {
-      return "<span class='clash'>" + s + "</span>"
+    if (any_clash({ datetime: data, duration: (row[5]-data)/60 }, row[PKI-1], 20)) {
+      return "<span class='clash'>" + s + "</span>";
     } else {
+      var api = new $.fn.dataTable.Api(meta.settings);
+      var t0 = api.column(4).data(); // start times (seconds utc)
+      var t1 = api.column(5).data(); // end times (seconds utc)
+      console.log("internal check " + s);
+      //console.log(meta.row);
+      //console.log(t0);
+      //console.log(t1);
+      if (internal_clash(t0, t1, meta.row)) {
+        return "<span class='iclash'>" + s + "</span>";
+      }
       return s;
     }
   } else {
@@ -775,11 +788,26 @@ function any_clash(a, bs, pad) {
   return false;
 }
 
-// pad = 5min = 300sec
-function internal_clash(bs, i) {
-  for (var j = 0; j < bs.length; ++j) {
-    if (i != j && is_clash(bs[i], bs[j], 300)) return true;
+// pad = delay - 1sec
+function internal_clash(ts0, ts1, i) {
+  if (ts0[i] == "" || ts1[i] == "") return false;
+  var pad = $('#breakduration').val();
+  if (pad == "") pad = 300;
+  --pad;
+  console.log("check (" + i + ") " + formatDate(new Date(ts0[i]*1000)) + " " +
+              formatTime(new Date(ts0[i]*1000)) + " " + formatTime(new Date(ts1[i]*1000)));
+  console.log("length " + ts0.length);
+  for (var j = 0; j < ts0.length; ++j) {
+    if (i == j) continue;
+    if (ts0[j] == "" || ts1[j] == "") continue;
+    //console.log("  against (" + j + ") " + formatDate(new Date(ts0[j]*1000)) + " " +
+    //            formatTime(new Date(ts0[j]*1000)) + " " + formatTime(new Date(ts1[j]*1000)));
+    if (ts1[i] + pad < ts0[j]) continue;
+    if (ts0[i] > ts1[j] + pad) continue;
+    console.log("clash");
+    return true;
   }
+  console.log("no clash");
   return false;
 }
 
