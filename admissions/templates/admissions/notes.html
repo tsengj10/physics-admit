@@ -121,7 +121,7 @@ from the colleges and posting them in a shared area.
 <tr><td>R</td><td>Rescued from potential desummoning</td></tr>
 <tr><td>K</td><td>Keep from reallocation (formerly &quot;Save&quot;)</td></tr>
 <tr><td>+</td><td>During long-listing phase, prospective summoning</td></tr>
-<tr><td>D</td><td>Desummoned</td></tr>
+<tr><td>Desum</td><td>Desummoned</td></tr>
 <tr><td>3[COL]</td><td>BA offer</td></tr>
 <tr><td>4[COL]</td><td>MPhys offer</td></tr>
 <tr><td>P[COL]</td><td>MPhysPhil offer</td></tr>
@@ -159,7 +159,7 @@ from the colleges and posting them in a shared area.
                   no further maths at A or AS level.</td></tr>
 <tr><td>1.3</td><td>Taking further maths at AS level.</td></tr>
 <tr><td>1.6</td><td>Has taken further maths at AS level.</td></tr>
-<tr><td>2</td><td></td>Taking or has taken further maths at A level.</tr>
+<tr><td>2</td><td>Taking or has taken further maths at A level.</td></tr>
 </table>
 
 <h3>Contextual flags</h3>
@@ -170,10 +170,12 @@ from the colleges and posting them in a shared area.
 <tr><td>G</td><td>Applicant's school performance at GCSE falls below national average</td></tr>
 <tr><td>Al</td><td>Applicant's school performance at A-level falls below national average</td></tr>
 <tr><td>Of</td><td>From a statistically under-represented school based on admissions results</td></tr>
-<tr><td>Ac</td><td>Applicant's postcode is within ACORN groups</td></tr>
-<tr><td>P</td><td>Applicant's home postcode lies within the bottom 2 quintiles of POLAR2 dataset</td></tr>
-<tr><td>Acc</td><td>Access flag</td></tr>
-<tr><td>Ov</td><td>Overall access flag:  in care; or if ACORN or POLAR2 are true, then GCSE, A-level, or OFFA flags are true </td></tr>
+<tr><td>Of1</td><td>From a statistically under-represented school, but with sufficiently high attainment
+                    to make competitive applications</td></tr>
+<tr><td>Ac</td><td>Applicant's postcode is within ACORN groups 4 or 5 (``financially stretched'' or ``urban adversity'')</td></tr>
+<tr><td>P</td><td>Applicant's home postcode lies within the bottom 2 quintiles of POLAR dataset, indicating
+                  lower rate of young people's participation in HE</td></tr>
+<tr><td>Ov</td><td>Overall access flag:  in care; or if ACORN or POLAR are true, then GCSE, A-level, OFFA, or OFFA1 flags are true </td></tr>
 </table>
 
 {% endblock %}
