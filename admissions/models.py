@@ -232,7 +232,7 @@ class Candidate(models.Model):
     help_text="Second college philosophy interview score")
 
   stored_jell_score = models.DecimalField(
-    max_digits=5,
+    max_digits=6,
     decimal_places=3,
     default=0)
   stored_rank = models.IntegerField(
@@ -241,12 +241,12 @@ class Candidate(models.Model):
   modification_timestamp = models.DateTimeField(auto_now=True,
                                                 editable=False)
 
-  def calc_jell_score(self):
+  def calc_jell_score(self, weights):
     """Property calculating the Jelley score"""
-    return WPATP * pat_physics + \
-           WPATM * pat_maths + \
-           WINT1 * (self.interview1 + self.interview2) + \
-           WINT2 * self.interview3
+    return weights.pat_physics * float(self.pat_physics) + \
+           weights.pat_maths * float(self.pat_maths) + \
+           weights.interview1 * float(self.interview1 + self.interview2) + \
+           weights.interview2 * float(self.interview3)
 
   objects = CandidateManager()
 

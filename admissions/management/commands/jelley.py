@@ -9,9 +9,10 @@ class Command(BaseCommand):
     parser.add_argument('tag', nargs='?', default='test')
 
   def handle(self, *args, **options):
+    weights = Weights.objects.last()
     all_students = Candidate.objects.all()
     for s in all_students:
-      s.stored_jell_score = s.calc_jell_score()
+      s.stored_jell_score = s.calc_jell_score(weights)
       s.save()
       self.stdout.write('Jelley score of {0} is {1}'.format(s.ucas_id, s.stored_jell_score))
     ordered = Candidate.objects.order_by('-stored_jell_score').all()
