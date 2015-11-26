@@ -34,10 +34,9 @@ Admissions database - {{ college.name }} schedule
     <th></th>
     {% for team in teams %}
     <th colspan="5" valign="top" align="left">
+      <a href="{% url 'admissions:view_team_schedule' team_pk=team.pk %}">{{ team.names }}</td>
       {% if allow_edit %}
-      <a href="{% url 'admissions:edit_schedule' team_pk=team.pk %}">{{ team.names }}</a>
-      {% else %}
-      {{ team.names }}
+      <a href="{% url 'admissions:edit_schedule' team_pk=team.pk %}">(Edit)</a>
       {% endif %}
     </th>
     {% endfor %}
@@ -151,10 +150,12 @@ $.each(students, function(pk, v) {
   var fields = [];
   var last = 1+5*teams.length; // last element of array of length 2+5*j
   for (var i = last; i > 0; --i) fields[i] = ""; // pre-initialize array
+  var nm = "<a href=\"{% url 'admissions:view_candidate_schedule' candidate_pk=999999 %}\" target='_blank'>" + v.n + "</a>";
+  var nm1 = nm.replace(/999999/g,"" + pk);
   if (any_clash(v.s, 20)) { // 20min padding
-    fields[0] = "<span class='clash'>" + v.n + "</span>"
+    fields[0] = "<span class='clash'>" + nm1 + "</span>"
   } else {
-    fields[0] = v.n;
+    fields[0] = nm1;
   }
   $.each(v.s, function(i, u) {
     var tpk = u.tpk;

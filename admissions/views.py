@@ -390,7 +390,7 @@ def post_slots(body, team):
 @login_required
 def view_team_schedule(request, team_pk, return_to='admissions:view_schedule'):
   team = get_object_or_404(InterviewTeam, pk=team_pk)
-  slots = InterviewSlot.objects.filter(team=team).order_by(time)
+  slots = InterviewSlot.objects.filter(team=team).prefetch_related('candidate').order_by('time')
   template_values = {
       'return_to': return_to,
       'team': team,
@@ -402,7 +402,7 @@ def view_team_schedule(request, team_pk, return_to='admissions:view_schedule'):
 def view_candidate_schedule(request, candidate_pk, return_to='admissions:view_schedule'):
   candidate = get_object_or_404(Candidate, pk=candidate_pk)
   info = candidate.info
-  slots = InterviewSlot.objects.filter(candidate=candidate).order_by(time)
+  slots = InterviewSlot.objects.filter(candidate=candidate).prefetch_related('team').order_by('time')
   template_values = {
       'return_to': return_to,
       'candidate': candidate,
