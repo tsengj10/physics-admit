@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Interview Schedule:  {{ info.surname }}, {{ info.forenames }}
+{% endblock %}
+{% block content %}
+
+<h2>Interview schedule for {{ info.surname }}, {{ info.forenames }} ({{ candidate.ucas_id }})</h2>
+
+<p>
+<ul>
+{% for slot in slots %}
+<li> <b>{{ slot.time }}</b>
+  <ul>
+  <li> {{ slot.team.college.name }}  ({{ slot.team.location }})
+  <li> Subject:  {{ slot.team.subject }}
+  <li> Interviewers:  {{ slot.team.names }}
+  <li> Notes:  {{ slot.team.notes }}
+  </ul>
+{% endfor %}
+</ul>
+</p>
+
+{% endblock %}

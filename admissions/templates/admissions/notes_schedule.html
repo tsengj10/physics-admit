@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions Scheduler - Notes
+{% endblock %}
+{% block content %}
+
+<h2>Using the scheduler</h2>
+
+<h3>Basic idea</h3>
+
+<p>
+A few ideas are helpful to keep in mind:
+<ul>
+<li> Interview slots and candidates are independent:  slots are scheduled,
+     and candidates can be shuffled and rotated among them.
+<li> Interview scheduling follows the order shown in the table, reflecting
+     however the table was sorted beforehand.
+<li> <b>Remember to save your schedule by hitting the &quot;Save&quot; button!</b>
+</ul>
+
+<h3>Starting from scratch</h3>
+
+<h4>Interview teams</h4>
+
+<p>
+Start by clicking on the &quot;Teams&quot; link on the front page for your college.
+The form presents blanks for you to fill in:  a short description of the team
+(usually the names of the interviewers), a location, and notes.  The notes will
+be reproduced on any printable versions of the schedule the system generates.
+</p>
+
+<p>
+Existing teams will be shown as filled-in form blanks so you can edit them.
+Add new teams by filling in the empty form at the bottom and hitting the
+&quot;Update&quot; button.
+</p>
+
+<p>
+If you click on another college's Teams link, you should see the teams they
+entered, but simply as an uneditable list.
+</p>
+
+<h4>Interview slots</h4>
+
+<p>
+The easiest way to create a schedule from scratch:
+<ol>
+<li> If you had previous interview slots scheduled, click on the
+     &quot;Clear sclots&quot; button.
+<li> Enter a default interview and break duration in minutes in the
+     blanks near the top of the page.  The break is the time between
+     interviews; it's all right to enter 0 here.
+<li> Select all the candidates by clicking in the checkbox in the
+     top left corner of the table.
+<li> Order the candidates however you like; in particular, click on the
+     &quot;Order&quot; column to sort it by first or second college priority.
+<li> You should also be able to sort by whether interviews will be local or
+     remote by clicking on the column header.  (There is a bug...)
+<li> Enter dates and times for interviews which will take place out of
+     the normal interview period, e.g., week 9.
+<li> For the regular block of interviews, enter the date and time of the
+     first interview.  Do the same for the second-choice interviews
+     (assuming they're on Wednesday).
+<li> Click on the &quot;Recalculate&quot; button.  This will fill in dates
+     and times based on default interview and break lengths.
+<li> In order to insert tea/lunch/dinner breaks, enter specific times to
+     resume interviews where needed.  You can also override the default
+     interview length if need be.  Click on &quot;Recalculate&quot; again.
+     (Click on the &quot;notes&quot; links to see any comments on the
+     candidate regarding the admissions process; this will also include
+     disability or special needs about which we've been informed.)
+<li> Continue to override and recalculate until you have a schedule you
+     consider humane.
+<li> <b>Remember to save your interview slots for later use!</b>
+</ol>
+</p>
+
+<h3>Starting from an existing schedule</h3>
+
+<p>
+The scheduler should load any previous interview slots you have defined,
+sorted initially in time order.
+</p>
+
+<p>
+If you wish to start from another interview team's slots - for instance,
+to make sure candidates have their interviews within a reasonable time
+of another - use the &quot;Copy schedule&quot; button along with the
+pull-down menu to select the team from which to copy.
+</p>
+
+<p>
+One easy way to keep interviews within a reasonable time of one another
+is to start from another team's schedule, select groups of candidates,
+and then rotate the candidates among the slots once or twice.
+</p>
+
+<p>
+Red is used to indicate where there may not be enough time between
+interviews.  It is currently assumed that 20 minutes is the minimum time
+between interviews for any individual candidate.  It also detects
+(albeit imperfectly) where a team's schedule has overlaps.
+However, the system won't prevent you from saving
+or printing out schedules with conflicts.
+</p>
+
+<p>
+Hit the &quot;Infer schedule&quot; to let the scheduler fill in the
+override blanks for you.  Then edit to your heart's content and
+<b>save the result</b>.
+</p>
+
+<h3>Printing a schedule</h3>
+
+<p>
+From the schedule view, you should be able to click on any candidate or
+team name to get a printable web page with just the information for
+that candidate or team.
+</p>
+
+{% endblock %}

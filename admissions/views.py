@@ -387,6 +387,34 @@ def post_slots(body, team):
       logger.error("Illegal interview slot post to student pk = " + d['cpk'])
   return
 
+@login_required
+def view_team_schedule(request, team_pk, return_to='admissions:view_schedule'):
+  team = get_object_or_404(InterviewTeam, pk=team_pk)
+  slots = InterviewSlot.objects.filter(team=team).order_by(time)
+  template_values = {
+      'return_to': return_to,
+      'team': team,
+      'slots': slots,
+      }
+  return render(request, 'admissions/view_team_schedule.html', template_values)
+
+@login_required
+def view_candidate_schedule(request, candidate_pk, return_to='admissions:view_schedule'):
+  candidate = get_object_or_404(Candidate, pk=candidate_pk)
+  info = candidate.info
+  slots = InterviewSlot.objects.filter(candidate=candidate).order_by(time)
+  template_values = {
+      'return_to': return_to,
+      'candidate': candidate,
+      'info': info,
+      'slots': slots,
+      }
+  return render(request, 'admissions/view_candidate_schedule.html', template_values)
+
+@login_required
+def notes_schedule(request):
+  return render(request, 'admissions/notes_schedule.html', {})
+
 #===============================================================
 # API
 #===============================================================

@@ -21,5 +21,8 @@ urlpatterns = [
   url(r'^teams/(?P<college_code>[a-z]{3})/$', views.view_or_edit_teams, name="edit_teams"),
   url(r'^schedule/(?P<college_code>[a-z]{3})/$', views.view_schedule, name="view_schedule"),
   url(r'^schedule/(?P<team_pk>[0-9]+)/$', views.view_or_edit_schedule, name="edit_schedule"),
+  url(r'^schedule/t/(?P<team_pk>[0-9]+)/$', views.view_team_schedule, name="view_team_schedule"),
+  url(r'^schedule/c/($P<candidate_pk>[0-9]+)/$', views.view_candidate_schedule, name="view_candidate_schedule"),
+  url(r'^schedule/notes/$', views.notes_schedule, name='notes_schedule'),
   url(r'^notes/$', views.notes, name='notes'),
 ]
