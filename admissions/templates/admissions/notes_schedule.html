@@ -16,6 +16,8 @@ A few ideas are helpful to keep in mind:
      and candidates can be shuffled and rotated among them.
 <li> Interview scheduling follows the order shown in the table, reflecting
      however the table was sorted beforehand.
+<li> Input blanks are used to change default behaviors when recalculating
+     the schedule.
 <li> <b>Remember to save your schedule by hitting the &quot;Save&quot; button!</b>
 </ul>
 
@@ -48,18 +50,21 @@ entered, but simply as an uneditable list.
 The easiest way to create a schedule from scratch:
 <ol>
 <li> If you had previous interview slots scheduled, click on the
-     &quot;Clear sclots&quot; button.
+     &quot;Clear slots&quot; button.
 <li> Enter a default interview and break duration in minutes in the
      blanks near the top of the page.  The break is the time between
      interviews; it's all right to enter 0 here.
-<li> Select all the candidates by clicking in the checkbox in the
+<li> Click on the &quot;Physics interviews&quot; or
+     &quot;Philosophy interviews&quot; buttons to set up to arrange
+     these intervies.  Or
+     select all the candidates by clicking in the checkbox in the
      top left corner of the table.
 <li> Order the candidates however you like; in particular, click on the
      &quot;Order&quot; column to sort it by first or second college priority.
 <li> You should also be able to sort by whether interviews will be local or
-     remote by clicking on the column header.  (There is a bug...)
-<li> Enter dates and times for interviews which will take place out of
-     the normal interview period, e.g., week 9.
+     remote by clicking on the column header.  (Note that in a blank
+     schedule, you can't sort by the &quot;Type&quot; column - this seems to be
+     a bug in the javascript library.)
 <li> For the regular block of interviews, enter the date and time of the
      first interview.  Do the same for the second-choice interviews
      (assuming they're on Wednesday).
@@ -73,6 +78,12 @@ The easiest way to create a schedule from scratch:
      disability or special needs about which we've been informed.)
 <li> Continue to override and recalculate until you have a schedule you
      consider humane.
+<li> To schedule interviews outside the normal interview period (such as
+     skype interviews), select only those interviews and set their
+     date and time.  The &quot;Recalculate&quot; button will then schedule
+     only these interviews; you can then sort the interviews by time
+     (click on the head of the &quot;Start&quot; column) to
+     keep them separate from the regular interviews.
 <li> <b>Remember to save your interview slots for later use!</b>
 </ol>
 </p>
@@ -87,8 +98,8 @@ sorted initially in time order.
 <p>
 If you wish to start from another interview team's slots - for instance,
 to make sure candidates have their interviews within a reasonable time
-of another - use the &quot;Copy schedule&quot; button along with the
-pull-down menu to select the team from which to copy.
+of another - use the pull-down menu to select the team from which to
+copy, and then hit the &quot;Copy from above&quot; button.
 </p>
 
 <p>
@@ -101,13 +112,13 @@ and then rotate the candidates among the slots once or twice.
 Red is used to indicate where there may not be enough time between
 interviews.  It is currently assumed that 20 minutes is the minimum time
 between interviews for any individual candidate.  It also detects
-(albeit imperfectly) where a team's schedule has overlaps.
+(albeit imperfectly) where a team's schedule has overlaps with itself.
 However, the system won't prevent you from saving
 or printing out schedules with conflicts.
 </p>
 
 <p>
-Hit the &quot;Infer schedule&quot; to let the scheduler fill in the
+Hit the &quot;Infer inputs&quot; button to have the scheduler fill in the
 override blanks for you.  Then edit to your heart's content and
 <b>save the result</b>.
 </p>

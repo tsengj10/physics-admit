@@ -61,8 +61,10 @@ input.dpicker { width: 6em }
 </table>
 </p>
 
+<p><i>To leave schedule unchanged, leave this page without saving.</i></p>
+
 <p>
-<table cellspacing="0" cellpadding="3" border="1">
+<table cellspacing="0" cellpadding="3" border="1" style="float: left;">
 <tr>
   <th>Selections</th>
   <th>Schedule Actions</th>
@@ -91,10 +93,8 @@ input.dpicker { width: 6em }
 </table>
 </p>
 
-<p>To leave schedule unchanged, leave this page without saving.</p>
-
 <p>
-<table cellspacing="0" cellpadding="3" border="1">
+<table cellspacing="0" cellpadding="3" border="1" style="float: left; margin: 3em">
 <tr>
   <th>Schedule Defaults</th>
   <th>(minutes)</th>
@@ -169,6 +169,8 @@ input.dpicker { width: 6em }
 
 <p>
 <a href="{% url 'admissions:view_schedule' college_code=team.college.adss_code|lower %}">[Return to college interview schedule]</a>
+&nbsp;
+<a href="{% url 'admissions:notes_schedule' %}" target='_blank'>[Notes on using scheduler tool]</a>
 </p>
 {% endblock %}
 
@@ -370,9 +372,9 @@ function infer_blanks() {
         //console.log(new_time);
         $('.change-start', e).prop('value', formatTime(new_time));
       } else if (current_time.getTime() != new_time.getTime()) {
-        console.log("Explicit time " + current_time.getTime() + " " + new_time.getTime());
-        console.log(current_time);
-        console.log(new_time);
+        //console.log("Explicit time " + current_time.getTime() + " " + new_time.getTime());
+        //console.log(current_time);
+        //console.log(new_time);
         // new time doesn't agree with current, so set explicitly
         $('.change-start', e).prop('value', formatTime(new_time));
       }
@@ -508,9 +510,12 @@ function copy_schedule() {
       if (other[i].tpk != tpk) continue;
       tab.cell(r, 4).data(other[i].datetime);
       tab.cell(r, 5).data(other[i].datetime + other[i].duration * 60);
+      //console.log("mode " + i + " is " + other[i].mode);
+      $('.imodes', $(r.node())).val(other[i].mode == 'local' ? 'L' : 'R');
     }
   });
   tab.draw();
+  enable_save();
 }
 
 function save_schedule() {
@@ -686,7 +691,7 @@ function render_start(data, type, row, meta) {
       var api = new $.fn.dataTable.Api(meta.settings);
       var t0 = api.column(4).data(); // start times (seconds utc)
       var t1 = api.column(5).data(); // end times (seconds utc)
-      console.log("internal check " + s);
+      //console.log("internal check " + s);
       //console.log(meta.row);
       //console.log(t0);
       //console.log(t1);
@@ -795,9 +800,9 @@ function internal_clash(ts0, ts1, i) {
   if (pad == "") pad = 5;
   --pad;
   pad *= 60; // convert to seconds
-  console.log("check (" + i + ") " + formatDate(new Date(ts0[i]*1000)) + " " +
-              formatTime(new Date(ts0[i]*1000)) + " " + formatTime(new Date(ts1[i]*1000)));
-  console.log("length " + ts0.length);
+  //console.log("check (" + i + ") " + formatDate(new Date(ts0[i]*1000)) + " " +
+  //            formatTime(new Date(ts0[i]*1000)) + " " + formatTime(new Date(ts1[i]*1000)));
+  //console.log("length " + ts0.length);
   for (var j = 0; j < ts0.length; ++j) {
     if (i == j) continue;
     if (ts0[j] == "" || ts1[j] == "") continue;
@@ -805,10 +810,10 @@ function internal_clash(ts0, ts1, i) {
     //            formatTime(new Date(ts0[j]*1000)) + " " + formatTime(new Date(ts1[j]*1000)));
     if (ts1[i] + pad < ts0[j]) continue;
     if (ts0[i] > ts1[j] + pad) continue;
-    console.log("clash");
+    //console.log("clash");
     return true;
   }
-  console.log("no clash");
+  //console.log("no clash");
   return false;
 }
 

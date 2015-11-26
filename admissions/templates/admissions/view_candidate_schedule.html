@@ -18,8 +18,8 @@ Interview Schedule:  {{ info.surname }}, {{ info.forenames }}
   <ul>
   <li> {{ slot.team.college.name }}  ({{ slot.team.location }})
   <li> Subject:  {{ slot.subject }}
-  <li> Interviewers:  {{ slot.team.names }}
-  <li> Notes:  {{ slot.team.notes }}
+  <li> Interviewers:  {{ slot.team.names }}<br>
+       {{ slot.team.notes }}
   </ul>
 {% empty %}
 <li> No interviews defined

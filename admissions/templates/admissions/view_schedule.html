@@ -23,18 +23,15 @@ Admissions database - {{ college.name }} schedule
 {% block content %}
 <h2>Interviews for {{ college.name }} ({{ college.adss_code }})</h2>
 
-{% if allow_edit %}
-<p>Click on team names to edit schedule.</p>
-{% endif %}
-
 <p>
 <table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
 <thead>
   <tr>
     <th></th>
+    <th></th>
     {% for team in teams %}
-    <th colspan="5" valign="top" align="left">
-      <a href="{% url 'admissions:view_team_schedule' team_pk=team.pk %}">{{ team.names }}</td>
+    <th colspan="4" valign="top" align="left">
+      <a href="{% url 'admissions:view_team_schedule' team_pk=team.pk %}">{{ team.names }}</a>
       {% if allow_edit %}
       <a href="{% url 'admissions:edit_schedule' team_pk=team.pk %}">(Edit)</a>
       {% endif %}
@@ -44,12 +41,12 @@ Admissions database - {{ college.name }} schedule
   </tr>
   <tr>
     <th>Candidate</th>
+    <th>Col1</th>
     {% for team in teams %}
     <th>Subject</th>
     <th>Mode</th>
-    <th>Date</th>
     <th>Start</th>
-    <th>End time</th>
+    <th>End</th>
     {% endfor %}
     <th>Other interviews</th>
   </tr>
@@ -57,12 +54,12 @@ Admissions database - {{ college.name }} schedule
 <tfoot>
   <tr>
     <th>Candidate</th>
+    <th>Col1</th>
     {% for team in teams %}
     <th>Subject</th>
     <th>Mode</th>
-    <th>Date</th>
     <th>Start</th>
-    <th>End time</th>
+    <th>End</th>
     {% endfor %}
     <th>Other interviews</th>
   </tr>
@@ -86,7 +83,11 @@ $.each(teams, function(index, value) {
 
 var students = {};
 {% for student in students %}
-students[{{ student.pk }}] = { "n": "{{ student.info.surname }}, {{ student.info.forenames }}", "s": [] };
+students[{{ student.pk }}] = {
+  "n": "{{ student.info.surname }}, {{ student.info.forenames }}",
+  "c": "{{ student.college1.adss_code }}",
+  "s": []
+};
 {% endfor %}
 
 {% for slot in slots %}
@@ -97,11 +98,7 @@ students[{{ slot.candidate.pk }}]["s"].push({
     "mode": "{{ slot.mode }}",
     "datetime": {{ slot.time|date:"U" }},
     "duration": {{ slot.length }},
-  });
-tslots[{{ slot.team.pk }}].push({
-    "datetime": {{ slot.time|date:"U" }},
-    "duration": {{ slot.length }},
-  });
+});
 {% endfor %}
 
 var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -140,6 +137,14 @@ function any_clash(bs, pad) {
 }
 
 // detect any clashes within a team schedule (only direct overlaps)
+$.each(students, function(pk, v) {
+  if (v.s.tpk in teams) {
+    tslots[v.s.tpk].push({
+      "datetime": v.s.datetime,
+      "duration": v.s.duration
+    });
+  }
+});
 var tclash = {};
 $.each(tslots, function(pk, v) {
   tclash[pk] = any_clash(v, 0);
@@ -148,15 +153,14 @@ $.each(tslots, function(pk, v) {
 var dataset = [];
 $.each(students, function(pk, v) {
   var fields = [];
-  var last = 1+5*teams.length; // last element of array of length 2+5*j
+  var last = 2+4*teams.length; // last element of array of length 2+5*j
   for (var i = last; i > 0; --i) fields[i] = ""; // pre-initialize array
   var nm = "<a href=\"{% url 'admissions:view_candidate_schedule' candidate_pk=999999 %}\" target='_blank'>" + v.n + "</a>";
-  var nm1 = nm.replace(/999999/g,"" + pk);
-  if (any_clash(v.s, 20)) { // 20min padding
-    fields[0] = "<span class='clash'>" + nm1 + "</span>"
-  } else {
-    fields[0] = nm1;
-  }
+  fields[0] = nm.replace(/999999/g,"" + pk);
+  var prefix = "<span class='clash'>";
+  var postfix = "</span>";
+  var rowclash = any_clash(v.s, 20); // 20min padding
+  fields[1] = rowclash ? prefix + v.c + postfix : v.c;
   $.each(v.s, function(i, u) {
     var tpk = u.tpk;
     for (var j = 0; j < teams.length; ++j) {
@@ -164,14 +168,13 @@ $.each(students, function(pk, v) {
         var a = new Date(u.datetime * 1000);
         var b = new Date((u.datetime + u.duration*60) * 1000);
         //console.log("start " + a + " end " + b);
-        var jj = j * 5;
-        var prefix = tclash[tpk] ? "<span class='clash'>" : "";
-        var postfix = tclash[tpk] ? "</span>" : "";
-        fields[++jj] = u.subject;
-        fields[++jj] = u.mode;
-        fields[++jj] = prefix + formatDate(a) + postfix;
-        fields[++jj] = prefix + formatTime(a) + postfix;
-        fields[++jj] = prefix + formatTime(b) + postfix;
+        var jj = j * 4 + 1;
+        var spre = (rowclash || tclash[tpk]) ? prefix : "";
+        var spost = (rowclash || tclash[tpk]) ? postfix : "";
+        fields[++jj] = spre + u.subject + spost;
+        fields[++jj] = spre + u.mode + spost;
+        fields[++jj] = spre + formatDate(a) + " " + formatTime(a) + spost;
+        fields[++jj] = spre + formatTime(b) + spost;
         return true;
       }
     }
@@ -192,6 +195,7 @@ $(document).ready(function() {
     data: dataset,
     columns: [
       { name: "name" },
+      { name: "college1" },
     ],
     "statesave": true,
     "tableTools": {
@@ -210,7 +214,6 @@ $(document).ready(function() {
   for (var i = 0; i < teams.length; ++i) {
     spec.columns.push({ name: "subject" + i });
     spec.columns.push({ name: "mode" + i });
-    spec.columns.push({ name: "date" + i });
     spec.columns.push({ name: "time" + i });
     spec.columns.push({ name: "end" + i });
   }
