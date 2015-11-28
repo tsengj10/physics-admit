@@ -193,7 +193,7 @@ students[{{ student.pk }}] = {
 
 {% for comment in comments %}
 students[{{ comment.candidate.pk }}]['comments'].push(
-    { "who": "{{ comment.commenter.username }}", "t": "{{ comment.text }}" })
+    { "who": "{{ comment.commenter.username }}", "t": "{{ comment.text }}" });
 {% endfor %}
 
 {% for slot in slots %}
