@@ -193,7 +193,7 @@ students[{{ student.pk }}] = {
 
 {% for comment in comments %}
 students[{{ comment.candidate.pk }}]['comments'].push(
-    { "who": "{{ comment.commenter.username }}", "t": "{{ comment.text }}" });
+    { "who": "{{ comment.commenter.username }}", "t": "{{ comment.text|linebreaksbr|escape }}" });
 {% endfor %}
 
 {% for slot in slots %}
@@ -797,7 +797,7 @@ function any_clash(a, bs, pad) {
 function internal_clash(ts0, ts1, i) {
   if (ts0[i] == "" || ts1[i] == "") return false;
   var pad = $('#breakduration').val();
-  if (pad == "") pad = 5;
+  if (pad == "" || pad == 0) return false;
   --pad;
   pad *= 60; // convert to seconds
   //console.log("check (" + i + ") " + formatDate(new Date(ts0[i]*1000)) + " " +

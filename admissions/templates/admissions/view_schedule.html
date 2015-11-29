@@ -29,9 +29,10 @@ Admissions database - {{ college.name }} schedule
   <tr>
     <th></th>
     <th></th>
+    <th></th>
     {% for team in teams %}
     <th colspan="4" valign="top" align="left">
-      <a href="{% url 'admissions:view_team_schedule' team_pk=team.pk %}">{{ team.names }}</a>
+      <a href="{% url 'admissions:view_team_schedule' team_pk=team.pk %}" target='_blank'>{{ team.names }}</a>
       {% if allow_edit %}
       <a href="{% url 'admissions:edit_schedule' team_pk=team.pk %}">(Edit)</a>
       {% endif %}
@@ -41,6 +42,7 @@ Admissions database - {{ college.name }} schedule
   </tr>
   <tr>
     <th>Candidate</th>
+    <th>Order</th>
     <th>Col1</th>
     {% for team in teams %}
     <th>Subject</th>
@@ -54,6 +56,7 @@ Admissions database - {{ college.name }} schedule
 <tfoot>
   <tr>
     <th>Candidate</th>
+    <th>Order</th>
     <th>Col1</th>
     {% for team in teams %}
     <th>Subject</th>
@@ -153,14 +156,15 @@ $.each(tslots, function(pk, v) {
 var dataset = [];
 $.each(students, function(pk, v) {
   var fields = [];
-  var last = 2+4*teams.length; // last element of array of length 2+5*j
+  var last = 3+4*teams.length; // last element of array of length 2+5*j
   for (var i = last; i > 0; --i) fields[i] = ""; // pre-initialize array
   var nm = "<a href=\"{% url 'admissions:view_candidate_schedule' candidate_pk=999999 %}\" target='_blank'>" + v.n + "</a>";
   fields[0] = nm.replace(/999999/g,"" + pk);
+  fields[1] = (v.c == "{{ college.adss_code }}") ? 1 : 2;
   var prefix = "<span class='clash'>";
   var postfix = "</span>";
   var rowclash = any_clash(v.s, 20); // 20min padding
-  fields[1] = rowclash ? prefix + v.c + postfix : v.c;
+  fields[2] = rowclash ? prefix + v.c + postfix : v.c;
   $.each(v.s, function(i, u) {
     var tpk = u.tpk;
     for (var j = 0; j < teams.length; ++j) {
@@ -168,7 +172,7 @@ $.each(students, function(pk, v) {
         var a = new Date(u.datetime * 1000);
         var b = new Date((u.datetime + u.duration*60) * 1000);
         //console.log("start " + a + " end " + b);
-        var jj = j * 4 + 1;
+        var jj = j * 4 + 2;
         var spre = (rowclash || tclash[tpk]) ? prefix : "";
         var spost = (rowclash || tclash[tpk]) ? postfix : "";
         fields[++jj] = spre + u.subject + spost;
@@ -195,8 +199,10 @@ $(document).ready(function() {
     data: dataset,
     columns: [
       { name: "name" },
+      { name: "order" },
       { name: "college1" },
     ],
+    "order": [ [ 1, "asc" ], [ 0, "asc" ] ],
     "statesave": true,
     "tableTools": {
       "aButtons": [
