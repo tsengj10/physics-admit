@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions database - decisions for {{ college.name }} ({{ college.adss_code }})
+{% endblock %}
+{% block head %}
+<style>
+table { font-size: 16px; }
+</style>
+{% endblock %}
+{% block content %}
+<h2>Decisions report:  {{ college.name }} ({{ college.adss_code }})</h2>
+
+<h3>Candidates withdrawn</h3>
+
+<p>
+<table border='1'>
+<tr><th><b>UCAS id</b></th><th><b>Surname</b></th><th><b>Forenames</b></th></tr>
+{% for candidate in withdrawn %}
+  <tr>
+    <td>{{ candidate.ucas_id }}</td>
+    <td>{{ candidate.info.surname }}</td>
+    <td>{{ candidate.info.forenames }}</td>
+  </tr>
+{% endfor %}
+</table>
+</p>
+
+<h3>Desummoned candidates</h3>
+
+<p>
+<table border='1'>
+<tr><th><b>UCAS id</b></th><th><b>Surname</b></th><th><b>Forenames</b></th></tr>
+{% for candidate in desummoned %}
+  <tr>
+    <td>{{ candidate.ucas_id }}</td>
+    <td>{{ candidate.info.surname }}</td>
+    <td>{{ candidate.info.forenames }}</td>
+  </tr>
+{% endfor %}
+</table>
+</p>
+
+<h3>Summoned candidates</h3>
+
+<p>
+<table border='1'>
+<tr><th><b>UCAS id</b></th><th><b>Surname</b></th><th><b>Forenames</b></th><th><b>Reallocated from</b></th></tr>
+{% for candidate in summoned %}
+  <tr>
+    <td>{{ candidate.ucas_id }}</td>
+    <td>{{ candidate.info.surname }}</td>
+    <td>{{ candidate.info.forenames }}</td>
+    <td>
+      {% if candidate.college1 != candidate.college_selected %}
+      {{ candidate.college_selected.adss_code }}
+      {% endif %}
+    </td>
+  </tr>
+{% endfor %}
+</table>
+</p>
+
+{% endblock %}

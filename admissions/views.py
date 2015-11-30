@@ -232,6 +232,25 @@ def view_shortlist_report(request, return_to='admissions:colleges'):
   return render(request, 'admissions/view_shortlist_report.html', template_values)
 
 #---------------------------------------------------------------
+# decisions reports
+#---------------------------------------------------------------
+
+@login_required
+def view_decisions_college(request, college_code):
+  c = get_object_or_404(College, adss_code=college_code.upper())
+  cands = Candidate.objects.filter(college1=c).select_related('info')
+  summoned = cands.filter(state=Candidate.STATE_SUMMONED)
+  desummoned = cands.filter(state=Candidate.STATE_DESUMMONED)
+  withdrawn = cands.filter(state=Candidate.STATE_WITHDRAWN)
+  template_values = {
+    'college': c,
+    'summoned': summoned,
+    'desummoned': desummoned,
+    'withdrawn': withdrawn,
+  }
+  return render(request, 'admissions/view_decisions_college.html', template_values)
+
+#---------------------------------------------------------------
 # interview teams
 #---------------------------------------------------------------
 

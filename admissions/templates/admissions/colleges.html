@@ -45,12 +45,14 @@ do not include deferred offers.</p>
 <th>Offers made</th>
 <th>Flags</th>
 <th>Interviews</th>
+<th>Decisions</th>
 </tr>
 <tr><th></th>
 <!--<th>teams</th><th>(do not use yet)</th>-->
 <th>(incl PhysPhil)</th>
 <th>(incl PhysPhil)</th>
 <th>(incl PhysPhil)</th>
+<th></th>
 <th></th>
 </tr>
 {% for college in colleges %}
@@ -65,6 +67,7 @@ do not include deferred offers.</p>
     <a href="{% url 'admissions:view_schedule' college_code=college.adss_code|lower %}">Schedule</a>
     {% endif %}
   </td>
+  <td><a href="{% url 'admissions:view_decisions_college' college_code=college.adss_code|lower %}">{{ college.adss_code }}</a></td>
 </tr>
 {% endfor %}
 </table>
