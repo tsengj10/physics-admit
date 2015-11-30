@@ -58,7 +58,8 @@ class Command(BaseCommand):
             if i >= len(row):
               break
             if re.match('^college[1-6]$', fname):
-              change = change or changecollege(s, fname, row[i])
+              thischange = changecollege(s, fname, row[i])
+              change = change or thischange
             elif fname == "date":
               pattime = datetime.datetime.strptime(row[i], '%d/%m/%Y')
             elif fname == "maths" or fname == "pat_maths":
