@@ -61,10 +61,6 @@ The easiest way to create a schedule from scratch:
      top left corner of the table.
 <li> Order the candidates however you like; in particular, click on the
      &quot;Order&quot; column to sort it by first or second college priority.
-<li> You should also be able to sort by whether interviews will be local or
-     remote by clicking on the column header.  (Note that in a blank
-     schedule, you can't sort by the &quot;Type&quot; column - this seems to be
-     a bug in the javascript library.)
 <li> For the regular block of interviews, enter the date and time of the
      first interview.  Do the same for the second-choice interviews
      (assuming they're on Wednesday).
@@ -78,14 +74,22 @@ The easiest way to create a schedule from scratch:
      disability or special needs about which we've been informed.)
 <li> Continue to override and recalculate until you have a schedule you
      consider humane.
-<li> To schedule interviews outside the normal interview period (such as
-     skype interviews), select only those interviews and set their
-     date and time.  The &quot;Recalculate&quot; button will then schedule
-     only these interviews; you can then sort the interviews by time
-     (click on the head of the &quot;Start&quot; column) to
-     keep them separate from the regular interviews.
 <li> <b>Remember to save your interview slots for later use!</b>
 </ol>
+To schedule interviews outside the normal interview period (such as
+skype interviews), select only those interviews and set their
+date and time.  The &quot;Recalculate&quot; button will schedule
+only these interviews; you can then sort the interviews by time
+(click on the head of the &quot;Start&quot; column) to
+keep them separate from the regular interviews.  It is helpful
+to indicate whether the interviews are local or remote.
+</p>
+
+<p>
+You should be able to sort rows by whether interviews will be local or
+remote by clicking on the column header.  (Note that in a blank
+schedule, you can't sort by the &quot;Type&quot; column - this seems to be
+a bug in the javascript library.)
 </p>
 
 <h3>Starting from an existing schedule</h3>
@@ -111,8 +115,7 @@ and then rotate the candidates among the slots once or twice.
 <p>
 Red is used to indicate where there may not be enough time between
 interviews.  It is currently assumed that 20 minutes is the minimum time
-between interviews for any individual candidate.  It also detects
-(albeit imperfectly) where a team's schedule has overlaps with itself.
+between interviews for any individual candidate.  
 However, the system won't prevent you from saving
 or printing out schedules with conflicts.
 </p>
@@ -129,6 +132,11 @@ override blanks for you.  Then edit to your heart's content and
 From the schedule view, you should be able to click on any candidate or
 team name to get a printable web page with just the information for
 that candidate or team.
+</p>
+
+<p>
+Note that these features are still being refined, and may also include
+an option for generating LaTeX tables.
 </p>
 
 {% endblock %}
