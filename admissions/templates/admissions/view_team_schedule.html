@@ -6,28 +6,42 @@
 <title>
 Interview Schedule
 </title>
+<style>
+h2 { text-align: center; }
+h3 { text-align: center; }
+p.centered { text-align: center; }
+table.tcentered {
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+  border: 1px solid black;
+}
+td, th { padding: 5px; }
+</style>
 </head>
 <body>
 
 <h2>{{ team.college.name }}</h2>
 
-<p>
+<h3>{{ team.names }}</h3>
+
+<p class="centered">
 Location:  {{ team.location }}
 </p>
 
-<p>
+<p class="centered">
 {{ team.notes }}
 </p>
 
-<p>
-<table border="1">
+<p class="centered">
+<table border="1" class="tcentered">
 <thead>
 <tr><th>Time</th><th>Candidate name</th></tr>
 </thead>
 <tbody>
 {% for slot in slots %}
   <tr>
-  <td>{{ slot.time }}</td>
+  <td>{{ slot.time|date:"D d M H:i" }}</td>
   <td>{{ slot.candidate.info.surname }}, {{ slot.candidate.info.forenames }}</td>
   </tr>
 {% endfor %}
