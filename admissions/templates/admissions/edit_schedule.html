@@ -500,6 +500,8 @@ function copy_schedule() {
   var tpk = parseInt($('#copysource').val());
   //console.log("Copy from team " + tpk);
   var tab = $('#slots').DataTable();
+  var rsel = $('.rsel').parents('tr');
+  var rs = get_candidate_data(tab, rsel);
   tab.rows().eq(0).each(function(index) {
     var r = tab.row(index);
     var pk = tab.cell(r, PKI).data();
@@ -514,6 +516,9 @@ function copy_schedule() {
       $('.imodes', $(r.node())).val(other[i].mode == 'local' ? 'L' : 'R');
     }
   });
+  map = [];
+  for (var i = 0; i < rsel.length; ++i) map.push(i);
+  set_candidate_data(tab, rsel, rs, map);
   tab.draw();
   enable_save();
 }
@@ -902,7 +907,7 @@ $(document).ready(function() {
       { name: "mode", "orderDataType": "dom-select", "class": "mode-selector c-data", "render": render_mode },
       { name: "subject", "orderDataType": "dom-select", "class": "subject-selector c-data", "render": render_subject },
       { name: "course", "class": "course-type c-data" },
-      { name: "order", "class": "c-data" },
+      { name: "order", "class": "c-data c-order" },
       { name: "col1", "class": "c-data" },
       { name: "name", "class": "c-data" },
       { name: "notes", "class": "comments-detail c-data" },
