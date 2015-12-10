@@ -185,7 +185,8 @@ $.each(students, function(pk, v) {
     // not one of the college teams, so append to other interviews
     if (fields[last].length > 0) fields[last] += ', ';
     var a = new Date(u.datetime * 1000);
-    fields[last] += u.tcol + " " + formatDate(a) + " " + formatTime(a);
+    fields[last] += (u.mode != "local" ? "("+u.mode+") " : "") +
+                     u.tcol + " " + formatDate(a) + " " + formatTime(a);
   });
   dataset.push(fields);
 });
