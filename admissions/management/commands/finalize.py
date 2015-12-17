@@ -43,4 +43,5 @@ class Command(BaseCommand):
         #offobj.save()
         self.stdout.write("   offer string:  {0}".format(offers))
         self.stdout.write("Offer finalized:  {0}[{1}] {2}".format(course_type, col.adss_code, c.info.surname))
+        break # only process the first valid offer found
 
