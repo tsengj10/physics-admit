@@ -112,46 +112,7 @@ class Command(BaseCommand):
     ss = Candidate.objects.all()
     for s in ss:
       j = self.make_json(s, overallstate, statephase)
-      apps.append(j)
-      ntuple.append(self.make_ntrow(j, collegekeys))
-      if s.state != Candidate.STATE_WITHDRAWN and s.state != Candidate.STATE_DESUMMONED:
-        alls.append(j)
-        if s.college1:
-          college[s.college1.adss_code].append(j)
-        if s.college2:
-          college[s.college2.adss_code].append(j)
-
-    if overallstate == OverallState.SHORTLIST and statephase == 0:
-      scoredata = self.encrypt_marks()
-
-    # all applications
-    apps[0]["timestamp"] = start_time
-    if overallstate == OverallState.SHORTLIST and statephase == 0:
-      apps[0]["more"] = scoredata
-    f = open('json/APP.json', 'w')
-    d = { "data": apps }
-    json.dump(d, f)
-    f.close()
-
-    # active applications
-    alls[0]["timestamp"] = start_time
-    if overallstate == OverallState.SHORTLIST and statephase == 0:
-      alls[0]["more"] = scoredata
-    f = open('json/ALL.json', 'w')
-    d = { "data": alls }
-    json.dump(d, f)
-    f.close()
-
-    # college lists
-    for c in cs:
-      if len(college[c.adss_code]) > 0:
-        college[c.adss_code][0]["timestamp"] = start_time
-        if overallstate == OverallState.SHORTLIST and statephase == 0:
-          college[c.adss_code][0]["more"] = scoredata
-        f = open('json/' + c.adss_code + '.json', 'w')
-        d = { "data": college[c.adss_code] }
-        json.dump(d, f)
-        f.close()
+      ntuple.append(self.make_ntrow(s, j, collegekeys))
 
     # stats ntuple
     f = open('json/marks.csv', 'w')
@@ -486,10 +447,11 @@ class Command(BaseCommand):
 
     return j
 
-  def make_ntrow(self, data, collegekeys):
-    # row columns:  pk id gender school sd course c1 c2 c3 c4 c5 c6 pm pp i1 i2 i3 i4 i5
-    #               0  1  2      3      4  5      6  7  8  9  10 11 12 13 14 15 16 17 18
+  def make_ntrow(self, cand, data, collegekeys):
+    # row columns:  state pk id gender school sd course c1 c2 c3 c4 c5 c6 pm pp i1 i2 i3 i4 i5
+    #               0     1  2  3      4      5  6      7  8  9  10 11 12 13 14 15 16 17 18 19
     d = []
+    d.append(cand.state)
     d.append(data['pk'])
     d.append(data['det']['id'])
     d.append(1 if data['g'] == 'M' else 2 if data['g'] == 'F' else 3)
