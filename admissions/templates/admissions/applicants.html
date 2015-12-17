@@ -489,9 +489,11 @@ function renderChangeIntCol2(data, type, row, meta) {
 }
 
 function renderChangeOffer(data, type, row, meta) {
-{% if state_enter_offers %}
   if (type === "display" && !readonly_user) {
-    if (!use_all_colleges && !offerable(row["rank"])) return data;
+    if (!use_all_colleges) {
+      if (globalstate != "O") return data;
+      if (!offerable(row["rank"])) return data;
+    }
     var jr = meta.row;
     var td = [];
     td.push("<select class='inblanks' name='crs-" + jr + "' onchange='enable_save()'>");
@@ -505,8 +507,7 @@ function renderChangeOffer(data, type, row, meta) {
   } else {
     return $("select[name='crs-"+meta.row+"']").val();
   }
-{% endif %}
-  return data;
+  //return data;
 }
 
 function renderJelleyScore(data, type, row, meta) {
@@ -559,7 +560,7 @@ var pk2row = [];
 // remember that for unit results, we need to "unescape" HTML entities
 // using HTMLParser.HTMLParser().unescape(string)
 $(document).ready(function() {
-  var visstate = (globalstate == "O");
+  var visstate = (globalstate == "O" || (globalstate == "C" && use_all_colleges));
   var spec = {
     "dom": 'TC<"clear">lfrtip', // add an R to use colReorder
     "ajax": {
