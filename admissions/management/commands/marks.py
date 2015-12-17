@@ -115,8 +115,8 @@ class Command(BaseCommand):
       ntuple.append(self.make_ntrow(s, j, collegekeys))
 
     # stats ntuple
-    f = open('json/marks.csv', 'w')
-    out = csv.writer(f, quoting=csv.QUOTE_NONE)
+    f = open('json/details.csv', 'w')
+    out = csv.writer(f, quoting=csv.QUOTE_NONE, delimiter=' ')
     for r in ntuple:
       out.writerow(r)
 
@@ -176,69 +176,6 @@ class Command(BaseCommand):
       t = '({})'.format(len(qual))
     return t
 
-  def encrypt_marks(self):
-    scoredata = []
-    for c in College.objects.all():
-      self.stdout.write("Encrypt interview marks for {}".format(c.name))
-      imarks = []
-      for s in c.college1.exclude(state=Candidate.STATE_WITHDRAWN).exclude(state=Candidate.STATE_DESUMMONED):
-        int1 = s.interview1
-        int2 = s.interview2
-        int4 = s.interview4
-        if int1 == 0 and int2 == 0 and int4 == 0:
-          continue
-        j = { "pk": s.pk }
-        if int1 > 0:
-          j["i1"] = "{:g}".format(int1)
-        if int2 > 0:
-          j["i2"] = "{:g}".format(int2)
-        if int4 > 0:
-          j["i4"] = "{:g}".format(int4)
-        imarks.append(j)
-      for s in c.college2.exclude(state=Candidate.STATE_WITHDRAWN).exclude(state=Candidate.STATE_DESUMMONED):
-        int3 = s.interview3
-        int5 = s.interview5
-        if int3 == 0 and int5 == 0:
-          continue
-        j = { "pk": s.pk }
-        if int3 > 0:
-          j["i3"] = "{:g}".format(int3)
-        if int5 > 0:
-          j["i5"] = "{:g}".format(int5)
-        imarks.append(j)
-      if len(imarks) == 0:
-        continue
-      cmarks = { "data": imarks }
-      plain = json.dumps(cmarks) # assume this returns type str (python 2!)
-      # pkcs7 padding
-      padlength = 16 - (len(plain) % 16)
-      plain += chr(padlength) * padlength
-      # iv
-      iv = Random.new().read(AES.block_size)
-      # encrypt
-      cipher = AES.new(c.key, AES.MODE_CBC, IV=iv)
-      msg = bytes.decode(binascii.b2a_base64(iv + cipher.encrypt(plain)))
-      scoredata.append({ "c": c.adss_code, "d": msg.strip() })
-    return scoredata
-
-# decrypt in javascript:
-#   pdata = CryptoJS.enc.Base64.parse('  ')
-#   key = CryptoJS.enc.Latin1.parse('   ')
-#   biv = CryptoJS.enc.Base64.parse('  ')
-#   decoded = CryptoJS.AES.decrypt({ ciphertext: pdata}, key, {iv: biv})
-#   hex2a(decoded)
-
-# rawData = atob(data)
-# iv = rawData.substring(0,16)
-# ciphertext = CryptoJS.enc.Latin1.parse(crypttext)
-# iv = ...Latin1.parse(iv)
-#
-# iv = btoa(rawData.substring(0,16))
-# crypttext = btoa(rawData.substring(16))
-
-# note that we should also pad base64-encoded string
-# so length is divisible by 3.  This supposedly overcomes Safari problem.
-
   def make_json(self, candidate, overallstate, statephase):
     student = candidate.info
     name = student.surname + ", " + student.forenames
@@ -248,18 +185,11 @@ class Command(BaseCommand):
     pm = candidate.pat_maths
     pp = candidate.pat_physics
 
-    if overallstate == OverallState.SHORTLIST and statephase == 0:
-      int1 = 0
-      int2 = 0
-      int3 = 0
-      int4 = 0
-      int5 = 0
-    else:
-      int1 = candidate.interview1
-      int2 = candidate.interview2
-      int3 = candidate.interview3
-      int4 = candidate.interview4
-      int5 = candidate.interview5
+    int1 = candidate.interview1
+    int2 = candidate.interview2
+    int3 = candidate.interview3
+    int4 = candidate.interview4
+    int5 = candidate.interview5
     js = pm + pp + 3*(int1 + int2) + 4*int3
 
     j = { \
@@ -471,5 +401,31 @@ class Command(BaseCommand):
     d.append(data['i3'] if data['i3'] else 0)
     d.append(data['i4'] if data['i4'] else 0)
     d.append(data['i5'] if data['i5'] else 0)
+    pat = cand.pat
+    c.append(pat.q1)
+    c.append(pat.q2)
+    c.append(pat.q3)
+    c.append(pat.q4)
+    c.append(pat.q5)
+    c.append(pat.q6)
+    c.append(pat.q7)
+    c.append(pat.q8)
+    c.append(pat.q9)
+    c.append(pat.q10)
+    c.append(pat.q11)
+    c.append(pat.q12)
+    c.append(pat.q13)
+    c.append(pat.q14)
+    c.append(pat.q15)
+    c.append(pat.q16)
+    c.append(pat.q17)
+    c.append(pat.q18)
+    c.append(pat.q19)
+    c.append(pat.q20)
+    c.append(pat.q21)
+    c.append(pat.q22)
+    c.append(pat.q23)
+    c.append(pat.q24)
+    c.append(pat.q25)
     return d
 
