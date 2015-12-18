@@ -78,6 +78,10 @@ def college_list(request):
             'fpp': 0,
             }
         collegedata[c.adss_code] = cdata
+    if state == OverallState.FINAL:
+        offers = Offer.objects.filter(final=True)
+    else:
+        offers = Offer.objects.all()
     offers = Offer.objects.all()
     for o in offers:
         c = o.college
@@ -242,11 +246,13 @@ def view_decisions_college(request, college_code):
   summoned = cands.filter(state=Candidate.STATE_SUMMONED)
   desummoned = cands.filter(state=Candidate.STATE_DESUMMONED)
   withdrawn = cands.filter(state=Candidate.STATE_WITHDRAWN)
+  offers = Offer.objects.filter(college=c, final=True)
   template_values = {
     'college': c,
     'summoned': summoned,
     'desummoned': desummoned,
     'withdrawn': withdrawn,
+    'offers': offers,
   }
   return render(request, 'admissions/view_decisions_college.html', template_values)
 

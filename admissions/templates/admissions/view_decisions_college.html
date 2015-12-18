@@ -61,4 +61,35 @@ table { font-size: 16px; }
 </table>
 </p>
 
+<h3>Offers</h3>
+
+<p>
+<table border='1'>
+<tr><th><b>UCAS id</b></th><th><b>Surname</b></th><th><b>Forenames</b></th>
+    <th><b>Course</b></th><th><b>Deferred</b></th><th><b>Open offer</b></th></tr>
+{% for offer in offers %}
+  <tr>
+    <td>{{ offer.candidate.ucas_id }}</td>
+    <td>{{ offer.candidate.info.surname }}</td>
+    <td>{{ offer.candidate.info.forenames }}</td>
+    <td>{% if offer.course_type == "3" %}BA
+        {% elif offer.course_type == "4" %}MPhys
+        {% else %}MPhysPhil
+        {% endif %}
+    <td>{{ offer.deferred_entry }}</td>
+    <td>{{ offer.underwritten }}</td>
+  </tr>
+{% endfor %}
+</table>
+</p>
+
+<p>
+Course codes:
+<ul>
+<li> 3:  Physics BA
+<li> 4:  Physics MPhys
+<li> P:  Physics and Philosophy
+</ul>
+</p>
+
 {% endblock %}
