@@ -6,6 +6,7 @@ Admissions database - decisions for {{ college.name }} ({{ college.adss_code }})
 {% block head %}
 <style>
 table { font-size: 16px; }
+td, th { padding: 5px; }
 </style>
 {% endblock %}
 {% block content %}
@@ -76,20 +77,11 @@ table { font-size: 16px; }
         {% elif offer.course_type == "4" %}MPhys
         {% else %}MPhysPhil
         {% endif %}
-    <td>{{ offer.deferred_entry }}</td>
-    <td>{{ offer.underwritten }}</td>
+    <td>{% if offer.deferred_entry %}Deferred{% endif %}</td>
+    <td>{% if offer.underwritten %}Open offer{% endif %}</td>
   </tr>
 {% endfor %}
 </table>
-</p>
-
-<p>
-Course codes:
-<ul>
-<li> 3:  Physics BA
-<li> 4:  Physics MPhys
-<li> P:  Physics and Philosophy
-</ul>
 </p>
 
 {% endblock %}
