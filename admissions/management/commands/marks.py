@@ -195,6 +195,7 @@ class Command(BaseCommand):
     j = { \
       "pk": candidate.pk, \
       "status": "", \
+      "offer": "", \
       "pm": "{}".format(pm), \
       "pp": "{}".format(pp), \
       "pt": "{}".format(pm+pp), \
@@ -245,6 +246,10 @@ class Command(BaseCommand):
       if candidate.reserved:
         status = status + 'K' # S (for keep)
     j['status'] = status
+    offers = candidate.offer.filter(final=True)
+    if offers.count() > 0:
+      o = offers[0]
+      j['offer'] = o.college.adss_code
     apd = {
       'id': candidate.ucas_id,
       'email': student.email,
@@ -378,8 +383,8 @@ class Command(BaseCommand):
     return j
 
   def make_ntrow(self, cand, data, collegekeys):
-    # row columns:  state pk id gender school sd course c1 c2 c3 c4 c5 c6 pm pp i1 i2 i3 i4 i5
-    #               0     1  2  3      4      5  6      7  8  9  10 11 12 13 14 15 16 17 18 19
+    # row columns:  state pk id gender school sd course c1 c2 c3 c4 c5 c6 pm pp i1 i2 i3 i4 i5 offer offer_course
+    #               0     1  2  3      4      5  6      7  8  9  10 11 12 13 14 15 16 17 18 19 20    21
     d = []
     d.append(cand.state)
     d.append(data['pk'])
