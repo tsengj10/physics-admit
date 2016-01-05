@@ -196,6 +196,9 @@ class Command(BaseCommand):
       "pk": candidate.pk, \
       "status": "", \
       "offer": "", \
+      "offercourse": "", \
+      "offerdeferred": "", \
+      "offeropen": "", \
       "pm": "{}".format(pm), \
       "pp": "{}".format(pp), \
       "pt": "{}".format(pm+pp), \
@@ -250,6 +253,9 @@ class Command(BaseCommand):
     if offers.count() > 0:
       o = offers[0]
       j['offer'] = o.college.adss_code
+      j['offercourse'] = o.course_type
+      j['offerdeferred'] = o.deferred_entry
+      j['offeropen'] = o.underwritten
     apd = {
       'id': candidate.ucas_id,
       'email': student.email,
@@ -383,10 +389,23 @@ class Command(BaseCommand):
     return j
 
   def make_ntrow(self, cand, data, collegekeys):
-    # row columns:  state pk id gender school sd course c1 c2 c3 c4 c5 c6 pm pp i1 i2 i3 i4 i5 offer offer_course
-    #               0     1  2  3      4      5  6      7  8  9  10 11 12 13 14 15 16 17 18 19 20    21
+    # row columns:  state pk id gender school sd course
+    #               c1 c2 c3 c4 c5 c6 pm pp i1 i2 i3 i4 i5
+    #               offer offer_course offer_open offer_deferred
+    #               q1 .. q25
+    #   state:  0 D; 1 W; 2 I
+    #   gender:  1 M; 2 F; 3 other
+    #   school:  0 C; 1 G; 2 I; 3 M; 4 S; 5 U
+    #   course:  3 BA; 4 MPhys; 5 PhysPhil only; 6 PhysPhil-with-fallback
+    #   collegekeys associates pk with college
+    #   offer:  collegekey (offering or underwriting)
+    #   offer_course:  3 BA; 4 MPhys; 5 PhysPhil; <0 if open offer
+    #   offer_open:  0 false; 1 true
+    #   offer_deferred:  0 false; 1 true
+    # may need to edit output file to reflect actual withdrawals (as opposed to full applications)
+    #
     d = []
-    d.append(cand.state)
+    d.append(0 if cand.state == 'D' else 1 if cand.state == 'W' else 2)
     d.append(data['pk'])
     d.append(data['det']['id'])
     d.append(1 if data['g'] == 'M' else 2 if data['g'] == 'F' else 3)
@@ -406,6 +425,16 @@ class Command(BaseCommand):
     d.append(data['i3'] if data['i3'] else 0)
     d.append(data['i4'] if data['i4'] else 0)
     d.append(data['i5'] if data['i5'] else 0)
+    if data['offer'] == "":
+      d.append(-1)
+      d.append(0)
+      d.append(0)
+      d.append(0)
+    else:
+      d.append(collegekeys[data['offer']])
+      d.append(self.course_types[data['offercourse']])
+      d.append(1 if data['offeropen'] else 0)
+      d.append(1 if data['offerdeferred'] else 0)
     pat = cand.pat
     d.append(pat.q1)
     d.append(pat.q2)
