@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% load staticfiles %}
+{% block title %}
+Admissions database - {{ team.college.name }} schedule editor
+{% endblock %}
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/media/css/jquery.dataTables.min.css" %}'>
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/ColVis/css/dataTables.colVis.min.css" %}'>
+<link rel="stylesheet" href='{% static "js/DataTables-1.10.2/extensions/TableTools/css/dataTables.tableTools.min.css" %}'>
+<!--  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">-->
+<link rel="stylesheet" href='{% static "js/jquery-ui-1.11.4.custom/jquery-ui.min.css" %}'></script>
+<script src='{% static "js/jquery-1.11.1.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/media/js/jquery.dataTables.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/extensions/ColVis/js/dataTables.colVis.min.js" %}'></script>
+<script src='{% static "js/DataTables-1.10.2/extensions/TableTools/js/dataTables.tableTools.min.js" %}'></script>
+<script src='{% static "js/jquery-cookie-1.4.1/jquery.cookie.js" %}'></script>
+<!--  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>-->
+<script src='{% static "js/jquery-ui-1.11.4.custom/jquery-ui.min.js" %}'></script>
+
+<style>
+table#teamspec { font-size: 16px; text-align: left }
+
+td.comments-detail {
+  color: blue;
+  cursor: pointer;
+}
+
+.comments { text-align: left }
+
+input.change-duration { width: 3em }
+
+input.change-start { width: 4em }
+
+input.dpicker { width: 6em }
+
+.clash { color: red }
+
+.iclash { color: magenta }
+
+</style>
+{% endblock %}
+{% block content %}
+<h2>Schedule editor for {{ team.college.name }} ({{ team.college.adss_code }})</h2>
+
+<p>
+<table id="teamspec" cellpadding="3">
+<tr>
+  <td>Team:</td>
+  <td>{{ team.names }}</td>
+</tr>
+<tr>
+  <td>Location:</td>
+  <td>{{ team.location }}</td>
+</tr>
+<tr>
+  <td>Notes:</td>
+  <td>{{ team.notes }}</td>
+</tr>
+</table>
+</p>
+
+<p><i>To leave schedule unchanged, leave this page without saving.</i></p>
+
+<p>
+<table cellspacing="0" cellpadding="3" border="1" style="float: left;">
+<tr>
+  <th>Selections</th>
+  <th>Schedule Actions</th>
+</tr>
+<tr>
+  <td><button type='button' id='physicsbutton' onclick='set_physics()'>Physics interviews</button></td>
+  <td></td>
+</tr>
+<tr>
+  <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
+  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear schedule</button></td>
+</tr>
+<tr>
+  <td><button type='button' id='reversebutton' onclick='reverse_selection()'>Reverse selection</button></td>
+  <td><button type='button' id='savebutton' class='statebutton' disabled=true onclick='save_schedule()'>Save all slots</button></td>
+</tr>
+</table>
+</p>
+
+<p>
+<table id="slots" class="display compact" cellspacing="0" cellpadding="0" width="100%">
+<thead>
+  <tr>
+    <th></th>
+    <th colspan="2" align="left">Current schedule</th>
+    <th colspan="7" align="left">Candidate</th>
+    <th></th>
+  </tr>
+  <tr>
+    <th><input type='checkbox' id='arsel' onchange='all_select()'></th>
+    <th title="Interview date">Date</th>
+    <th title="Interview start">Start</th>
+    <th title="Interview length (minutes)">Duration</th>
+    <th title="Interview type">Type</th>
+    <th title="Interview subject">Subject</th>
+    <th title="Candidate course choice">Course</th>
+    <th title="College priority order">Order</th>
+    <th title="First college choice">Col1</th>
+    <th title="Candidate name">Name</th>
+    <th title="Notes on candidate">Notes</th>
+    <th title="Other interviews">Other interviews</th>
+    <th>Index</th>
+  </tr>
+</thead>
+<tfoot>
+  <tr>
+    <th></th>
+    <th title="Interview date">Date</th>
+    <th title="Interview start">Start</th>
+    <th title="Interview length (minutes)">Duration</th>
+    <th title="Interview type">Type</th>
+    <th title="Interview subject">Subject</th>
+    <th title="Candidate course choice">Course</th>
+    <th title="College priority order">Order</th>
+    <th title="First college choice">Col1</th>
+    <th title="Candidate name">Name</th>
+    <th title="Notes on candidate">Notes</th>
+    <th title="Other interviews">Other interviews</th>
+    <th>Index</th>
+  </tr>
+</tfoot>
+</table>
+</p>
+
+<p>
+<a href="{% url 'admissions:view_schedule' college_code=team.college.adss_code|lower %}">[Return to college interview schedule]</a>
+&nbsp;
+<a href="{% url 'admissions:notes_schedule' %}" target='_blank'>[Notes on using scheduler tool]</a>
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// template entries:  team, students, slots
+var students = {};
+{% for student in students %}
+students[{{ student.pk }}] = {
+  "n": "{{ student.info.surname }}, {{ student.info.forenames }}",
+  "course": "{{ student.course_type }}",
+  "col1": "{{ student.college1.adss_code }}",
+  "other": [],
+  "spec": "{{ student.info.has_special_needs }}",
+  "dcode": "{{ student.info.disability_code }}",
+  "dis": "{{ student.info.disability_notes }}",
+  "comments": [],
+};
+{% endfor %}
+
+{% for comment in comments %}
+students[{{ comment.candidate.pk }}]['comments'].push(
+    { "who": "{{ comment.commenter.username }}", "t": "{{ comment.text|linebreaksbr|escape }}" });
+{% endfor %}
+
+{% for slot in slots %}
+  {% if slot.team.pk == team.pk %}
+students[{{ slot.candidate.pk }}]["s"] = {
+    "subject": "{{ slot.subject }}",
+    "mode": "{{ slot.mode }}",
+    "datetime": {{ slot.time|date:"U" }},
+    "duration": {{ slot.length }},
+  };
+  {% else %}
+students[{{ slot.candidate.pk }}]["other"].push({
+    "tpk": {{ slot.team.pk }},
+    "tcol": "{{ slot.team.college.adss_code }}",
+    "mode": "{{ slot.mode }}",
+    "datetime": {{ slot.time|date:"U" }},
+    "duration": {{ slot.length }},
+  });
+  {% endif %}
+{% endfor %}
+
+var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+var PKI = 12; // last column number
+
+function twoDigit(n) {
+  var s = (n < 10 ? "0" : "");
+  return s + n;
+}
+
+function formatDate(d) {
+  return twoDigit(d.getDate()) + " " + months[d.getMonth()];
+}
+
+function formatTime(d) {
+  //return d.toLocaleTimeString();
+  return twoDigit(d.getHours()) + ":" + twoDigit(d.getMinutes());
+}
+
+function format_comments(pk, jrow) {
+  var s = [];
+  var d = students[pk];
+  var c = d.comments;
+  s.push('<p><ul class="comments">');
+  s.push("<li><b>UCAS disability information</b><br>(" + d.dcode + ") " + d.dis);
+  for (var i = 0; i < c.length; ++i) {
+    s.push("<li><b>" + c[i].who + "</b><br>" +
+           c[i].t.replace('&#10;','<br>').replace('\n','<br>').replace('\r',''));
+  }
+  s.push('</ul></p>');
+  return s.join('');
+}
+
+function all_select() {
+  //console.log("all_select " + $('#arsel').prop('checked'));
+  var value = $('#arsel').prop('checked');
+  $('.rsel').prop('checked', value);
+}
+
+function reverse_selection() {
+  $('.rsel').prop('checked', function(i, val) { return !val; });
+}
+
+function set_physics() {
+  $('.isubjects').val("1"); // change all to physics interviews
+  $('.imodes').val(function(i, old) { return old == "0" ? "L" : old }).change();
+  $('.rsel').prop('checked', true);
+  enable_save();
+}
+
+function set_philosophy() {
+  $('.rsel').each(function(i, e) {
+    var row = $(this).parents('tr');
+    var course = row.children('.course-type').text();
+    if (course == "P" || course == "Q") {
+      $(this).prop('checked', true);
+      $('.imodes', row).val(function(i, old) { return old == "0" ? "L" : old });
+      $('.isubjects', row).val("2");
+    } else {
+      $(this).prop('checked', false);
+      $('.imodes', row).val("0");
+    }
+  });
+  enable_save();
+}
+
+function clear_blanks() {
+  $('.rsel:checked').parents('tr')
+                    .children('td')
+                    .children('[type=text],[type=number]')
+                    .val("");
+}
+
+// from http://www.timlabonne.com/2013/07/parsing-a-time-string-with-javascript/
+// understands 1pm, 1:00pm, 1:00p, 13:00.  Returns NaN if can't parse at all.
+function parseTime(timeStr, dt) {
+    if (!dt) {
+        dt = new Date();
+    }
+ 
+    var time = timeStr.match(/(\d+)(?::(\d\d))?\s*(p?)/i);
+    if (!time) {
+        return NaN;
+    }
+    var hours = parseInt(time[1], 10);
+    hours += (hours < 12 && time[3]) ? 12 : 0;
+ 
+    dt.setHours(hours);
+    dt.setMinutes(parseInt(time[2], 10) || 0);
+    dt.setSeconds(0, 0);
+    return dt;
+}
+
+function save_schedule() {
+  var rs = [];
+  var tab = $('#slots').DataTable();
+  tab.rows().eq(0).each(function(index) {
+    var r = tab.row(index);
+    var e = r.node();
+    // mode
+    var mode = $('.imodes', e).val();
+    if (mode == "0") return; // skip if no interview
+    // time
+    var t0 = tab.cell(r, 1).data();
+    var td = tab.cell(r, 3).data();
+    if (t0 == "" || t1 == "") return; // skip if no scheduled times
+    // TODO: need to calculate initial datetime from columns 1 and 2
+    var rd = { "t":t0, "l":td, "mode":mode,
+               "subject": $('.isubjects', e).val(),
+               "cpk": tab.cell(r, PKI).data() };
+    rs.push(rd);
+  });
+  console.log(JSON.stringify(rs));
+  $.post("{% url 'admissions:edit_schedule' team_pk=team.pk %}", JSON.stringify(rs));
+  disable_save();
+}
+
+function copy(o) {
+   var out, v, key;
+   out = Array.isArray(o) ? [] : {};
+   for (key in o) {
+       v = o[key];
+       out[key] = (typeof v === "object") ? copy(v) : v;
+   }
+   return out;
+}
+
+function get_candidate_data(tab, rows) {
+  rs = [];
+  rows.each(function(i, e) {
+    var r = tab.row(e);
+    var data = r.data();
+    var d = [];
+    for (var ic = 6; ic <= PKI; ++ic) d[ic] = data[ic];
+    d[0] = $('.rsel', e).prop('checked');
+    d[1] = $('.dpicker', e).prop('value');
+    d[2] = $('.change-start', e).prop('value');
+    d[3] = $('.imodes', e).val();
+    d[4] = $('.isubjects', e).val();
+    d[PKI+1] = $('.dpicker', e).attr('id');
+    rs[i] = d;
+    //console.log("get candidate data for row " + i);
+  });
+  return rs;
+}
+
+function set_candidate_data(tab, rows, data, map) {
+  rows.each(function(i, e) {
+    var r = tab.row(e);
+    for (var ic = 6; ic <= PKI; ++ic) tab.cell(r, ic).data(data[map[i]][ic]);
+    $('.imodes', e).val(data[map[i]][3]);
+    $('.isubjects', e).val(data[map[i]][4]);
+    $('.rsel', e).prop('checked', data[i][0]);
+    $('.dpicker', e).prop('value', data[i][1]);
+    $('.change-start', e).prop('value', data[i][2]);
+    $('#'+data[i][PKI+1]).datepicker();
+  });
+}
+
+//
+// datepicker ui
+//
+
+$.datepicker.setDefaults({
+  "dateFormat": "dd/mm/yy",
+  "minDate": new Date(2015, 11, 1), // 1 Dec
+  "maxDate": new Date(2015, 11, 17), // 17 Dec
+});
+
+function render_rselection(data, type, row, meta) {
+  if (type = "display") {
+    return '<input type="checkbox" class="rsel">';
+  } else {
+    return data;
+  }
+}
+
+function render_change_date(data, type, row, meta) {
+  if (type == "display") {
+    return '<input id="datepicker' + meta.row + '" class="dpicker" type="text">';
+  } else {
+    return data;
+  }
+}
+
+function render_change_start(data, type, row, meta) {
+  if (type == "display") {
+    return '<input type="text" class="change-start">';
+  } else {
+    return data;
+  }
+}
+
+function render_change_duration(data, type, row, meta) {
+  if (type == "display") {
+    return '<input type="number" class="change-duration">';
+  } else {
+    return data;
+  }
+}
+
+function render_mode(data, type, row, meta) {
+  if (type === "display") {
+    var td = [];
+    td.push('<select class="imodes" onchange="enable_save()"><option value="0"');
+    if (data == "" || data == "0") td.push(' selected="selected"');
+    td.push('>no interview</option><option value="L"');
+    if (data == "L") td.push(' selected="selected"');
+    td.push('>local</option><option value="R"');
+    if (data == "R") td.push(' selected="selected"');
+    td.push('>remote</option></select>');
+    return td.join('');
+  } else {
+    return data;
+  }
+}
+
+function render_subject(data, type, row, meta) {
+  if (type === "display") {
+    var td = [];
+    td.push('<select class="isubjects" onchange="enable_save()"><option value="1"');
+    if (data != "2") td.push(' selected="selected"');
+    td.push('>physics</option><option value="2"');
+    if (data == "2") td.push(' selected="selected"');
+    td.push('>philosophy</option></select>');
+    return td.join('');
+  } else {
+    return data;
+  }
+}
+
+function render_other(data, type, row, meta) {
+  if (type === "display") {
+    if (data.length == 0) return "";
+    var s = [];
+    for (var i = 0; i < data.length; ++i) {
+      var u = data[i];
+      var a = new Date(u.datetime * 1000);
+      s.push((u.mode != "local" ? "("+u.mode+") " : "") +
+             u.tcol + " " + formatDate(a) + " " + formatTime(a));
+    }
+    return s.join("; ");
+  } else {
+    if (data.length > 0) return data.datetime;
+    else return "";
+  }
+}
+
+/* below function from DataTables documentation */
+/* Create an array with the values of all the select options in a column */
+$.fn.dataTable.ext.order['dom-select'] = function  ( settings, col )
+{
+    return this.api().column( col, {order:'index'} ).nodes().map( function ( td, i ) {
+        return $('select', td).val();
+    } );
+}
+
+function enable_save() {
+  $('.statebutton').removeAttr('disabled');
+}
+
+function disable_save() {
+  $('.statebutton').attr('disabled','disabled');
+}
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+var csrftoken = $.cookie('csrftoken');
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+//"csrfmiddlewaretoken" is a key in your posted data,for example,
+//when you need to ajax login,your posted data may like this:
+// {'username':'username','password':'password',
+//  'csrfmiddlewaretoken':'CSRF-TOKEN-V‌​ALUE'} – 
+
+var dataset = [];
+$.each(students, function(pk, v) {
+  var fields = [];
+  fields[0] = ""; // row selector checkboxes
+  fields[1] = ""; // start date selector
+  fields[2] = ""; // start time selector
+  fields[3] = ""; // duration selector
+  fields[4] = ""; // mode / interview type
+  fields[5] = ""; // subject of interview
+  if (v['s'] != undefined) {
+    // TODO: calculate values for 1,2,3
+    var a = new Date(v.s.datetime * 1000);
+    var b = new Date((v.s.datetime + v.s.duration*60) * 1000);
+    fields[1] = v.s.datetime;
+    fields[3] = v.s.datetime + v.s.duration*60;
+
+    fields[4] = v.s.mode == 'local' ? 'L' : 'R'; // should be a selector
+    fields[5] = v.s.subject == 'physics' ? '1' : '2'; // should be a selector
+  }
+  fields[6] = v.course;
+  fields[7] = (v.col1 == "{{ team.college.adss_code }}") ? 1 : 2;
+  fields[8] = v.col1;
+  fields[9] = v.n;
+  fields[10] = v.dcode == 'A' && v.comments.length == 0 ? '' : 'notes'; // disability or notes
+  fields[11] = (v['other'] != undefined) ? v.other : [];
+  fields[12] = pk;
+  //console.log(fields);
+  dataset.push(fields);
+});
+//console.log(dataset);
+
+$(document).ready(function() {
+
+  //console.log(dataset);
+
+  // dom:  T for TableTools, and C... for ColVis
+  var spec = {
+    //dom: 'T<"clear">lfrtip', // add an R to use colReorder
+    data: dataset,
+    columns: [
+      { name: "rselection", orderable: false, "render": render_rselection }, // row selection checkboxes
+      { name: "changedate", orderable: false, "class": "datepickers", "render": render_change_date },
+      { name: "changestart", orderable: false, "render": render_change_start },
+      { name: "changeduration", orderable: false, "render": render_change_duration },
+      { name: "mode", "orderDataType": "dom-select", "class": "mode-selector c-data", "render": render_mode },
+      { name: "subject", "orderDataType": "dom-select", "class": "subject-selector c-data", "render": render_subject },
+      { name: "course", "class": "course-type c-data" },
+      { name: "order", "class": "c-data c-order" },
+      { name: "col1", "class": "c-data" },
+      { name: "name", "class": "c-data" },
+      { name: "notes", "class": "comments-detail c-data" },
+      { name: "other", orderable: false, "render": render_other, "class": "c-data", "defaultContent": "None" },
+      { name: "pk", "class": "pk-value c-data", visible: false },
+    ],
+    "order": [ [ 9, "asc" ] ],
+    "statesave": true,
+    "paging": false
+  };
+  table = $('#slots').DataTable(spec);
+
+  $('#slots tbody').on('click', 'td.comments-detail', function() {
+    var tr = $(this).closest('tr');
+    var row = table.row(tr);
+    if (row.child.isShown()) {
+      row.child.hide();
+    } else {
+      var child = row.child(format_comments(row.data()[PKI], row.index()) );
+      child.show();
+    }
+  });
+
+  // start date is set here.  Rotation/shuffle changes from start date
+  // to value, which is a change in behavior.
+  table.$('.datepickers').each(function(i) {
+    var nm = "#datepicker" + i;
+    $(nm).datepicker();
+  });
+
+  disable_save();
+
+});
+</script>
+{% endblock %}
