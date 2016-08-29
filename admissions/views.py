@@ -404,7 +404,10 @@ def post_slots(body, team):
       s.subject = InterviewSlot.PHYSICS if d['subject'] == '1' else InterviewSlot.PHILOSOPHY
       s.mode = InterviewSlot.LOCAL if d['mode'] == 'L' else InterviewSlot.REMOTE
       s.time = datetime.datetime.utcfromtimestamp(d['t']) # TODO timezone?
-      s.length = (d['e'] - d['t']) / 60 # minutes
+      if 'e' in d:
+        s.length = (d['e'] - d['t']) / 60 # minutes
+      else:
+        s.length = d['l'] # minutes
       logger.info("new interview slot {}".format(s))
       s.save()
     # may want to save the new objects in an array and commit in a block with atomic()
