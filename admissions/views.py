@@ -388,7 +388,7 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
       'slots': slots,
       'comments': comments,
       }
-  return render(request, 'admissions/edit_schedule.html', template_values)
+  return render(request, 'admissions/edit_team_schedule.html', template_values)
 
 def post_slots(body, team):
   # get rid of old slots

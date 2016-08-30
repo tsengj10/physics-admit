@@ -89,8 +89,8 @@ input.dpicker { width: 6em }
 <thead>
   <tr>
     <th></th>
-    <th colspan="2" align="left">Current schedule</th>
-    <th colspan="7" align="left">Candidate</th>
+    <th colspan="5" align="left">Schedule</th>
+    <th colspan="6" align="left">Candidate</th>
     <th></th>
   </tr>
   <tr>
@@ -184,6 +184,12 @@ var PKI = 12; // last column number
 function twoDigit(n) {
   var s = (n < 10 ? "0" : "");
   return s + n;
+}
+
+function formatNumDate(d) {
+  var y = "" + d.getFullYear();
+  var m = d.getMonth() + 1;
+  return "" + d.getDate() + "/" + m + "/" + y.substr(2);
 }
 
 function formatDate(d) {
@@ -355,7 +361,11 @@ function render_rselection(data, type, row, meta) {
 
 function render_change_date(data, type, row, meta) {
   if (type == "display") {
-    return '<input id="datepicker' + meta.row + '" class="dpicker" type="text">';
+    var td = [];
+    td.push('<input id="datepicker' + meta.row + '" class="dpicker" type="text"');
+    if (data != "") td.push(' value="' + data + '"');
+    td.push(' onchange="enable_save()">');
+    return td.join('');
   } else {
     return data;
   }
@@ -363,7 +373,11 @@ function render_change_date(data, type, row, meta) {
 
 function render_change_start(data, type, row, meta) {
   if (type == "display") {
-    return '<input type="text" class="change-start">';
+    var td = [];
+    td.push('<input type="text" class="change-start"');
+    if (data != "") td.push(' value="' + data + '"');
+    td.push(' onchange="enable_save()">');
+    return td.join('');
   } else {
     return data;
   }
@@ -371,7 +385,11 @@ function render_change_start(data, type, row, meta) {
 
 function render_change_duration(data, type, row, meta) {
   if (type == "display") {
-    return '<input type="number" class="change-duration">';
+    var td = [];
+    td.push('<input type="number" class="change-duration"');
+    if (data != "") td.push(' value="' + data + '"');
+    td.push(' onchange="enable_save()">');
+    return td.join('');
   } else {
     return data;
   }
@@ -469,12 +487,10 @@ $.each(students, function(pk, v) {
   fields[4] = ""; // mode / interview type
   fields[5] = ""; // subject of interview
   if (v['s'] != undefined) {
-    // TODO: calculate values for 1,2,3
     var a = new Date(v.s.datetime * 1000);
-    var b = new Date((v.s.datetime + v.s.duration*60) * 1000);
-    fields[1] = v.s.datetime;
-    fields[3] = v.s.datetime + v.s.duration*60;
-
+    fields[1] = formatNumDate(a);
+    fields[2] = formatTime(a);
+    fields[3] = v.s.duration;
     fields[4] = v.s.mode == 'local' ? 'L' : 'R'; // should be a selector
     fields[5] = v.s.subject == 'physics' ? '1' : '2'; // should be a selector
   }
