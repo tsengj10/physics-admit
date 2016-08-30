@@ -286,8 +286,9 @@ function save_schedule() {
     if (mode == "0") return; // skip if no interview
     // time
     var t0 = tab.cell(r, 1).data();
+    var tt = tab.cell(r, 2).data();
     var td = tab.cell(r, 3).data();
-    if (t0 == "" || t1 == "") return; // skip if no scheduled times
+    if (t0 == "" || tt == "") return; // skip if no scheduled times
     // TODO: need to calculate initial datetime from columns 1 and 2
     var rd = { "t":t0, "l":td, "mode":mode,
                "subject": $('.isubjects', e).val(),
@@ -529,7 +530,7 @@ $(document).ready(function() {
       { name: "other", orderable: false, "render": render_other, "class": "c-data", "defaultContent": "None" },
       { name: "pk", "class": "pk-value c-data", visible: false },
     ],
-    "order": [ [ 9, "asc" ] ],
+    "order": [ [ 7, "asc" ], [ 9, "asc" ] ],
     "statesave": true,
     "paging": false
   };
