@@ -32,7 +32,7 @@ class Command(BaseCommand):
     if options['time'] > 0:
       start_time = options['time']
     else:
-      start_time = calendar.timegm(datetime.datetime.utcnow().utctimetuple())
+      start_time = calendar.timegm(datetime.datetime.now(datetime.timezone.utc).timetuple())
 
     # exam dictionaries
     self.qnames = { "A-level": "A",

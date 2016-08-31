@@ -380,6 +380,7 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
   comments = Comment.objects.filter(candidate__in=students)
   infos = CandidateInfo.objects.filter(candidate__in=students)
   teams = college.interview_team.all()
+  schedule = Schedule.objects.first()
   template_values = {
       'return_to': return_to,
       'team': team,
@@ -387,6 +388,8 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
       'students': students,
       'slots': slots,
       'comments': comments,
+      'mindate': schedule.interviews_begin,
+      'maxdate': schedule.interviews_end,
       }
   return render(request, 'admissions/edit_team_schedule.html', template_values)
 
@@ -403,7 +406,7 @@ def post_slots(body, team):
       s.team = team
       s.subject = InterviewSlot.PHYSICS if d['subject'] == '1' else InterviewSlot.PHILOSOPHY
       s.mode = InterviewSlot.LOCAL if d['mode'] == 'L' else InterviewSlot.REMOTE
-      s.time = datetime.datetime.utcfromtimestamp(d['t']) # TODO timezone?
+      s.time = datetime.datetime.fromtimestamp(d['t'], datetime.timezone.utc)
       if 'e' in d:
         s.length = (d['e'] - d['t']) / 60 # minutes
       else:
@@ -811,7 +814,7 @@ def post_student_states(body, user):
 def get_student_states(since, user, college_code=None):
   kw = {}
   if since:
-    base = datetime.datetime.utcfromtimestamp(int(since))
+    base = datetime.datetime.fromtimestamp(int(since), datetime.timezone.utc)
     kw['modification_timestamp__gt'] = base
   if OverallState.objects.current() in [ OverallState.SHORTLIST ]:
     kw['state'] = Candidate.STATE_SUMMONED

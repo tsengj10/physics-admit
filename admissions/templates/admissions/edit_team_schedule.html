@@ -350,8 +350,8 @@ function set_candidate_data(tab, rows, data, map) {
 
 $.datepicker.setDefaults({
   "dateFormat": "dd/mm/yy",
-  "minDate": new Date(2015, 11, 1), // 1 Dec
-  "maxDate": new Date(2015, 11, 17), // 17 Dec
+  "minDate": new Date({{mindate|date:"Y"}}, {{mindate|date:"n"}}-1, {{mindate|date:"j"}}), // 1 Dec 2015
+  "maxDate": new Date({{maxdate|date:"Y"}}, {{maxdate|date:"n"}}-1, {{maxdate|date:"j"}}), // 17 Dec 2015
 });
 
 function render_rselection(data, type, row, meta) {

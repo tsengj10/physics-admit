@@ -33,6 +33,7 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     filename = options['filename']
+    pattime_default = Schedule.objects.first().pat_date
     with open(filename, 'r') as csvfile:
       inf = csv.reader(csvfile)
       first = True
@@ -52,7 +53,8 @@ class Command(BaseCommand):
 
           change = False
           changepat = False
-          pattime = datetime.datetime(2015,11,4,14,0,0,0)
+          #pattime = datetime.datetime(2015,11,4,14,0,0,0)
+          pattime = pattime_default
           for i in range(1,len(fields)):
             fname = fields[i].lower()
             if i >= len(row):
