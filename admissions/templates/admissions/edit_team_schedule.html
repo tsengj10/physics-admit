@@ -61,7 +61,8 @@ input.dpicker { width: 6em }
 </table>
 </p>
 
-<p><i>To leave schedule unchanged, leave this page without saving.</i></p>
+<p><i>To leave schedule unchanged, leave this page without saving.<br>
+Reload to discard changes since last save.</i></p>
 
 <p>
 <table cellspacing="0" cellpadding="3" border="1" style="float: left;">
@@ -75,7 +76,7 @@ input.dpicker { width: 6em }
 </tr>
 <tr>
   <td><button type='button' id='philosophybutton' onclick='set_philosophy()'>Philosophy interviews</button></td>
-  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear schedule</button></td>
+  <td><button type='button' id='clearbutton' onclick='clear_blanks()'>Clear selected blanks</button></td>
 </tr>
 <tr>
   <td><button type='button' id='reversebutton' onclick='reverse_selection()'>Reverse selection</button></td>
@@ -132,7 +133,6 @@ input.dpicker { width: 6em }
 <p>
 <a href="{% url 'admissions:view_schedule' college_code=team.college.adss_code|lower %}">[Return to college interview schedule]</a>
 &nbsp;
-<a href="{% url 'admissions:notes_schedule' %}" target='_blank'>[Notes on using scheduler tool]</a>
 </p>
 {% endblock %}
 
@@ -187,9 +187,8 @@ function twoDigit(n) {
 }
 
 function formatNumDate(d) {
-  var y = "" + d.getFullYear();
   var m = d.getMonth() + 1;
-  return "" + d.getDate() + "/" + m + "/" + y.substr(2);
+  return "" + d.getDate() + "/" + m + "/" + d.getFullYear();
 }
 
 function formatDate(d) {
@@ -253,6 +252,7 @@ function clear_blanks() {
                     .children('td')
                     .children('[type=text],[type=number]')
                     .val("");
+  enable_save();
 }
 
 // from http://www.timlabonne.com/2013/07/parsing-a-time-string-with-javascript/
@@ -285,17 +285,19 @@ function save_schedule() {
     var mode = $('.imodes', e).val();
     if (mode == "0") return; // skip if no interview
     // time
-    var t0 = tab.cell(r, 1).data();
-    var tt = tab.cell(r, 2).data();
-    var td = tab.cell(r, 3).data();
-    if (t0 == "" || tt == "") return; // skip if no scheduled times
-    // TODO: need to calculate initial datetime from columns 1 and 2
-    var rd = { "t":t0, "l":td, "mode":mode,
+    var t0 = $('.dpicker', e).datepicker('getDate');
+    var tt = $('.change-start', e).prop('value');
+    var td = $('.change-duration', e).prop('value');
+    if (t0 == "" || tt == "" || td == "") return; // skip if no scheduled times
+    //var d = $.datepicker.parseDate('dd/mm/yy', t0);
+    parseTime(tt, t0);
+    var dt = t0.getTime() / 1000;
+    var rd = { "t":dt, "l":td, "mode":mode,
                "subject": $('.isubjects', e).val(),
                "cpk": tab.cell(r, PKI).data() };
     rs.push(rd);
   });
-  console.log(JSON.stringify(rs));
+  //console.log(JSON.stringify(rs));
   $.post("{% url 'admissions:edit_schedule' team_pk=team.pk %}", JSON.stringify(rs));
   disable_save();
 }
