@@ -298,7 +298,10 @@ function save_schedule() {
     rs.push(rd);
   });
   //console.log(JSON.stringify(rs));
-  $.post("{% url 'admissions:edit_schedule' team_pk=team.pk %}", JSON.stringify(rs));
+  $.post("{% url 'admissions:edit_schedule' team_pk=team.pk %}", JSON.stringify(rs), function(data) {
+    console.log(data);
+    window.location = data.url;
+  });
   disable_save();
 }
 

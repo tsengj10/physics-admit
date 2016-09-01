@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from admissions.models import *
 from admissions.forms import *
 import json
@@ -361,8 +361,11 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
   if request.method == 'POST':
     # parse request data
     post_slots(request.body.decode('utf-8'), team)
-    kwargs = { 'college_code': team.college.adss_code.lower() }
-    return redirect('admissions:view_schedule', **kwargs)
+    #kwargs = { 'college_code': team.college.adss_code.lower() }
+    #return redirect('admissions:view_schedule', **kwargs)
+    #return HttpResponseRedirect(reverse('admissions:view_schedule', args=(team.college.adss_code.lower(),)))
+    response = { 'url': reverse('admissions:view_schedule', args=(team.college.adss_code.lower(),)) }
+    return HttpResponse(json.dumps(response), content_type='application/json')
 
   overallstate = OverallState.objects.current()
   if overallstate == OverallState.DEVELOPMENT:
@@ -380,7 +383,7 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
   comments = Comment.objects.filter(candidate__in=students)
   infos = CandidateInfo.objects.filter(candidate__in=students)
   teams = college.interview_team.all()
-  schedule = Schedule.objects.first()
+  schedule = Schedule.objects.last()
   template_values = {
       'return_to': return_to,
       'team': team,

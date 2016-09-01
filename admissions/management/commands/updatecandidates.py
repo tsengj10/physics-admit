@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
   def handle(self, *args, **options):
     filename = options['filename']
-    pattime_default = Schedule.objects.first().pat_date
+    pattime_default = Schedule.objects.last().pat_date
     with open(filename, 'r') as csvfile:
       inf = csv.reader(csvfile)
       first = True
