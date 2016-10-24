@@ -2,7 +2,6 @@
 
 import sys
 import re
-from string import split
 
 names = []
 data = []
