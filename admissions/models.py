@@ -362,9 +362,19 @@ class CandidateInfo(models.Model):
                "matriculation year")
     )
 
+  cgcse_score = models.FloatField(
+    blank=True,
+    null=True,
+    help_text=("Contextualized GCSE score.")
+    )
+
   overseas = models.BooleanField(
     default=False,
     help_text="True if the applicant is from outside the UK and EU."
+    )
+  eu = models.BooleanField(
+    default=False,
+    help_text="True if EU, false if UK (only valid of overseas is False)."
     )
   declared_in_care = models.NullBooleanField(
     verbose_name="Declared In Care",
@@ -374,7 +384,7 @@ class CandidateInfo(models.Model):
   offa = models.NullBooleanField(
     verbose_name="OFFA",
     help_text=("True if the applicant is from a statistically "
-               "under-represented school (based on admissions vs. results).")
+               "under-represented school (based on admissions vs. results) OBSOLETE.")
     )
   offa1 = models.NullBooleanField(
     default=False,
@@ -457,6 +467,7 @@ class CandidateInfo(models.Model):
 
   def overall_widening_access(self):
     # ADSS rules are that the following applicants should be flagged
+    # OBSOLETE but not used
     if self.declared_in_care:
       return True
 

@@ -322,6 +322,7 @@ class Command(BaseCommand):
       "sdm": "0", \
       "pred": "None", \
       "obt": "None", \
+      "cgcse": student.cgcse_score, \
       "care": render_boolean(student.declared_in_care), \
       "gcse": render_boolean(student.gcse), \
       "alev": render_boolean(student.a_level), \
@@ -359,7 +360,7 @@ class Command(BaseCommand):
       'email': student.email,
       'bd': student.birth_date.strftime('%d/%m/%y'),
       # '{0}y{1}m'.format(ap.age.years, ap.age.months),
-      'ovs': render_boolean(student.overseas),
+      'ovs': "Overseas" if student.overseas else "EU" if student.eu else "Home",
       'spec': render_boolean(student.has_special_needs),
       'dcode': student.disability_code,
       'dis': student.disability_notes,
