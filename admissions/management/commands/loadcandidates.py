@@ -29,6 +29,24 @@ def toFloat(str):
   else:
     return None
 
+def toOverseas(str):
+  if len(str) > 0:
+    return str == 'Overseas'
+  else:
+    return False
+
+def toEU(str):
+  if len(str) > 0:
+    return str == 'EU'
+  else:
+    return False
+
+def toDeclared(str):
+  if len(str) > 0:
+    return str == 'Y' or str == 'y' or str == 'DECLARED'
+  else:
+    return False
+
 class Command(BaseCommand):
   help = 'Load candidates'
 
@@ -68,7 +86,7 @@ class Command(BaseCommand):
           #self.stdout.write('Candidate {0} {1}'.format(row[0], row[2]))
           a, created = Candidate.objects.update_or_create(ucas_id = row[0],
                          defaults = { 'college_selected':
-                           College.objects.get(name=row[34]) if row[34] else None,
+                           College.objects.get(name=row[37]) if row[37] else None,
                            'course_type': ccode })
           self.stdout.write('{0} {1} {2}'.format(row[0], row[2], 'created' if created else 'updated'))
 
@@ -83,18 +101,20 @@ class Command(BaseCommand):
                            'disability_code': row[6],
                            'disability_notes': row[7],
                            'has_special_needs': (len(row[8]) > 0),
-                           'interview_year': 2014,
+                           'interview_year': 2016,
                            'deferred_entry': toBoolean(row[16]),
-                           'overseas': toBoolean(row[17]),
-                           'declared_in_care': toNullBoolean(row[29]),
-                           'overall': toNullBoolean(row[32]),
-                           'access': toNullBoolean(row[27]),
-                           'offa': toNullBoolean(row[31]),
-                           'offa1': toNullBoolean(row[35]),
-                           'acorn': toNullBoolean(row[28]),
-                           'polar': toNullBoolean(row[33]),
-                           'gcse': toNullBoolean(row[30]),
-                           'a_level': toNullBoolean(row[26]),
+                           'overseas': toOverseas(row[35]),
+                           'eu': toEU(row[35]),
+                           'declared_in_care': toDeclared(row[29]),
+                           'overall': toBoolean(row[32]),
+                           'access': toBoolean(row[27]),
+                           'offa': toBoolean(row[31]),
+                           'offa1': toBoolean(row[34]),
+                           'acorn': toBoolean(row[28]),
+                           'polar': toBoolean(row[33]),
+                           'gcse': toBoolean(row[30]),
+                           'a_level': toBoolean(row[26]),
+                           'cgcse_score': toFloat(row[39]),
                            'school_pre16_performance': toFloat(row[20]),
                            'school_pre16_gold_performance': toFloat(row[21]),
                            'school_post16_performance': toFloat(row[24]),
@@ -104,7 +124,7 @@ class Command(BaseCommand):
                            'telephone': row[11],
                            'email': row[12],
                            'current_passport_country': row[14],
-                           'verified_in_care': False })
+                           'verified_in_care': toBoolean(row[29]) })
           self.stdout.write('Candidate {0} {1}'.format(a, 'created' if created else 'updated'))
 
           p, created = PATDetails.objects.update_or_create(candidate = a)
