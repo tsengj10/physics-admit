@@ -155,7 +155,7 @@ class Command(BaseCommand):
                          day = 1)
             sch, created = School.objects.update_or_create(
                     student = students[row[7]].info,
-                    ucas_school_id = row[8], 
+                    ucas_school_id = row[15], 
                     start_date = sdate,
                     end_date = edate,
                     defaults = {
