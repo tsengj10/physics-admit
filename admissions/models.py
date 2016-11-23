@@ -20,6 +20,7 @@ class Schedule(models.Model):
   pat_date = models.DateTimeField(help_text="default PAT date and time")
   interviews_begin = models.DateField(help_text="earliest interview date")
   interviews_end = models.DateField(help_text="latest interview date")
+  interviews_default = models.DateField(help_text="default interview date", null=True, blank=True)
 
 #===========================================================================
 
