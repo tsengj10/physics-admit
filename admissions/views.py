@@ -393,7 +393,7 @@ def edit_schedule(request, team, return_to='admissions:colleges'):
       'comments': comments,
       'mindate': schedule.interviews_begin,
       'maxdate': schedule.interviews_end,
-      'defdate': schedule.interview_default,
+      'defdate': schedule.interviews_default,
       }
   return render(request, 'admissions/edit_team_schedule.html', template_values)
 
