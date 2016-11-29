@@ -71,6 +71,10 @@ Admissions database - {{ college.name }} schedule
 </p>
 {% endblock %}
 
+<p>
+<a href="{% url 'admissions:notes_schedule' %}" target='_blank'>[Notes on editing schedule]</a>
+</p>
+
 {% block scripts %}
 <script>
 var teams = [];

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load url from future %}
+{% block title %}
+Admissions Scheduler - Notes
+{% endblock %}
+{% block content %}
+
+<h2>Using the scheduler</h2>
+
+<h3>Interview teams</h3>
+
+<p>
+The first step is to create your interview teams.  From the college list
+page, click on the &quot;Teams&quot; link for your College
+under the &quot;Interviews&quot; column.  This will present you with
+a fillable form.  Detais you have already entered for your teams will
+fill the first forms.
+
+<p>
+To <b>add</b> a team, fill out at least the &quot;Names&quot; field in
+the last (blank) form.
+Location and notes are optional; if you use the database to make a printable
+version of your schedule, these will be printed as well, but otherwise
+the databae doesn't use this information.  Then press <i>Update</i>
+button below the form.
+</p>
+
+<p>
+To <b>edit</b> a team's information, simply edit the information in place
+and press the <i>Update</i> button.
+</p>
+
+<p>
+To <b>delete</b> a team, tick the <i>Delete</i> checkbox below the form
+for the team and press the <i>Update</i> button.
+</p>
+
+<p>
+You can edit, delete, and add teams all with the same update.
+</p>
+
+<p>
+If you click on another College's Teams link, you should see the teams they
+entered, but simply as an uneditable list.
+</p>
+
+<h3>Interview schedule</h3>
+
+<p>
+The interview schedule page is accessed by clicking on the &quot;Schedule&quot;
+link for your College under the &quot;Interviews&quot; column.  This page
+lists candidates and their interview slots for each interview team.
+It also lists interviews which have been scheduled at other Colleges for
+these candidates.  Interviews which fall within 20 minutes of other interviews
+should be flagged as a potential conflict (the logic is not perfect, however,
+but at least one of the conflicting interviews should be flagged in most
+circumstances).
+</p>
+
+<p>
+The interview table can be sorted according to the columns by clicking in the
+column header.
+</p>
+
+<p>
+To <b>view</b> interviews scheduled for an individual candidate, click 
+on the candidate's name in the left column.
+</p>
+
+<p>
+To <b>view</b> interviews scheduled for a team, click on the team's
+name in the table header.
+</p>
+
+<p>
+To <b>edit</b> the interview schedule for a team, click on the
+&quot;Edit&quot; link next to the team's name in the table header.
+</p>
+
+<h3>Editing interview slots</h3>
+
+<p>
+The easiest way to get started is to click on the
+<i>Physics interviews</i> or <i>Philosophy interviews</i>
+button.  These buttons select the relevant candidates and, if no
+interviews have been scheduled for them yet, fills in some default
+values for the interview type and subject.
+</p>
+
+<p>
+The interview type options are local, remote, or no interview.
+Use &quot;local&quot; for face-to-face interviews, and
+&quot;remote&quot; for skype interviews.
+</p>
+
+<p>
+The subject options are physics or philosophy.  &quot;Physics&quot;,
+in this case, also includes mathematics, i.e., the normal interview
+subjects for normal physics candidates.
+</p>
+
+<p>
+You can fill out as few or as many interview slots as you'd like
+at any given time.  Previous slots will be filled into the form,
+ready for editing.
+</p>
+
+<p>
+If you want to leave the schedule unchanged, just leave the page
+without saving interview slots.
+</p>
+
+<p>
+To <b>save</b> the interview slots, click on the <i>Save all slots</i>
+button.  Note that all complete interview slots are saved (or re-saved,
+as the case may be), whether or not they have been selected using the
+checkboxes on the left side.
+</p>
+
+<p>
+Red is used to indicate where there may not be enough time between
+interviews.  It is currently assumed that 20 minutes is the minimum time
+between interviews for any individual candidate.  
+However, the system won't prevent you from saving
+or printing out schedules with conflicts.
+</p>
+
+{% endblock %}

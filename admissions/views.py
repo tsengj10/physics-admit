@@ -448,7 +448,7 @@ def view_candidate_schedule(request, candidate_pk, return_to='admissions:view_sc
 
 @login_required
 def notes_schedule(request):
-  return render(request, 'admissions/notes_schedule.html', {})
+  return render(request, 'admissions/notes2_schedule.html', {})
 
 #===============================================================
 # API
