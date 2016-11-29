@@ -44,6 +44,8 @@ td .helptext{font-size:1em;}
 &nbsp;
 <a href="{% url 'admissions:notes' %}" target='_blank'>[Notes on using the system]</a>
 &nbsp;
+<a href="{% url 'admissions:notes_schedule' %}" target='_blank'>[Notes on editing schedule]</a>
+&nbsp;
 <a href="{% static 'documents' %}" target='_blank'>[Other documents]</a>
 </p>
 {% if user.is_authenticated %}
